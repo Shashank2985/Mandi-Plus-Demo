@@ -25,4 +25,11 @@ const userSchema = new mongoose.Schema({
     },
 });
 
+// Virtual for insurance forms
+userSchema.virtual('insuranceForms', {
+    ref: 'InsuranceForm',
+    localField: '_id',
+    foreignField: 'user',
+});
+
 module.exports = mongoose.model('User', userSchema);

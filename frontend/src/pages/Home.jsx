@@ -59,7 +59,10 @@ const Home = () => {
                     </div>
 
                     {/* Card 2 */}
-                    <div className="bg-orange-100 rounded-2xl p-4 shadow-sm">
+                    <div
+                        className="bg-orange-100 rounded-2xl p-4 shadow-sm cursor-pointer hover:bg-orange-200 transition-colors"
+                        onClick={() => navigate('/insurance')}
+                    >
                         <div className="text-3xl mb-2">🛡️</div>
                         <h4 className="font-bold text-green-800">Insurance</h4>
                         <p className="text-xs text-gray-600">Get instant policy</p>
@@ -73,10 +76,13 @@ const Home = () => {
                     </div>
 
                     {/* Card 4 */}
-                    <div className="bg-green-100 rounded-2xl p-4 shadow-sm">
+                    <div
+                        className="bg-green-100 rounded-2xl p-4 shadow-sm cursor-pointer hover:bg-green-200 transition-colors"
+                        onClick={() => navigate('/my-insurance-forms')}
+                    >
                         <div className="text-3xl mb-2">💳</div>
-                        <h4 className="font-bold text-green-800">Payment Records</h4>
-                        <p className="text-xs text-gray-600">See your past payments</p>
+                        <h4 className="font-bold text-green-800">My Forms</h4>
+                        <p className="text-xs text-gray-600">View submitted forms</p>
                     </div>
                 </div>
             </div>
