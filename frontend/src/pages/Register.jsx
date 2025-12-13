@@ -117,6 +117,7 @@ const Register = () => {
             };
             const response = await registerUser(data);
             localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
             navigate('/home');
         } catch (err) {
             setError(err.message || 'Registration failed');

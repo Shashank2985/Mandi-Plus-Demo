@@ -1,6 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/');
+        }
+    }, [navigate]);
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const mobileNumber = user.mobileNumber || 'User';
+
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col">
             {/* Header */}
@@ -15,7 +28,7 @@ const Home = () => {
                         <div className="w-16 h-16 bg-[#25D366] rounded-full mx-auto flex items-center justify-center mb-4">
                             <span className="text-white text-2xl font-bold">M</span>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Mandi Plus!</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome, {mobileNumber}!</h2>
                         <p className="text-gray-600">You have successfully registered and are now logged in.</p>
                     </div>
 
