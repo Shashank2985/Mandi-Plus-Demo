@@ -81,12 +81,12 @@ const MyInsuranceForms = () => {
                                         {form.notes && <p><strong>Notes:</strong> {form.notes}</p>}
                                         {form.pdfURL && (
                                             <a
-                                                href={`http://localhost:5000/${form.pdfURL}`}
+                                                href={`http://localhost:5000${form.pdfURL}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline"
+                                                className="text-blue-600 hover:underline inline-block mt-2 px-4 py-2 bg-blue-50 rounded hover:bg-blue-100"
                                             >
-                                                Download PDF
+                                                View/Download PDF
                                             </a>
                                         )}
                                     </div>

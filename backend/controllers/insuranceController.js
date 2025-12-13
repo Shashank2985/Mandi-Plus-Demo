@@ -1,7 +1,74 @@
 const InsuranceForm = require('../models/InsuranceForm');
+const fs = require('fs');
+const path = require('path');
+const puppeteer = require('puppeteer');
+const handlebars = require('handlebars');
 const auth = require('../middleware/auth');
 
-// @desc    Create insurance form
+// Helper function to read file as base64
+const fileToBase64 = (filePath) => {
+    if (!filePath) return null;
+    try {
+        const fileData = fs.readFileSync(filePath);
+        return `data:image/png;base64,${fileData.toString('base64')}`;
+    } catch (error) {
+        console.error('Error reading file:', error);
+        return null;
+    }
+};
+
+// Helper function to generate PDF
+const generatePDF = async (data) => {
+    const templatePath = path.join(__dirname, '../templates/invoice.html');
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    const template = handlebars.compile(templateContent);
+    
+    // Prepare data for template
+    const templateData = {
+        ...data,
+        date: new Date().toLocaleDateString(),
+        invoiceNumber: `INV-${Date.now()}`,
+        amount: (data.quantity * data.rate).toFixed(2),
+        weightmentSlip: data.weightmentSlipPath ? fileToBase64(data.weightmentSlipPath) : null,
+        stampImage: fileToBase64(path.join(__dirname, '../public/stamp.png')) // Add your stamp image
+    };
+
+    const html = template(templateData);
+    
+    const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
+    try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        
+        // Ensure all images are loaded
+        await page.evaluate(async () => {
+            const selectors = Array.from(document.querySelectorAll('img'));
+            await Promise.all(selectors.map(img => {
+                if (img.complete) return;
+                return new Promise((resolve) => {
+                    img.addEventListener('load', resolve);
+                    img.addEventListener('error', resolve);
+                });
+            }));
+        });
+
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+        });
+
+        return pdfBuffer;
+    } finally {
+        await browser.close();
+    }
+};
+
+// @desc    Create insurance form with PDF generation
 // @route   POST /api/insurance/create
 // @access  Private
 const createInsuranceForm = async (req, res) => {
@@ -20,22 +87,34 @@ const createInsuranceForm = async (req, res) => {
             notes,
         } = req.body;
 
-        // Calculate amount
-        const amount = quantity * rate;
-
         // Handle file uploads
-        let weightmentSlipURL = '';
-        let pdfURL = '';
-
-        if (req.files) {
-            if (req.files.weightmentSlip) {
-                weightmentSlipURL = req.files.weightmentSlip[0].path;
-            }
-            if (req.files.pdfFile) {
-                pdfURL = req.files.pdfFile[0].path;
-            }
+        let weightmentSlipPath = '';
+        if (req.files?.weightmentSlip?.[0]) {
+            weightmentSlipPath = req.files.weightmentSlip[0].path;
         }
 
+        // Generate PDF
+        const pdfBuffer = await generatePDF({
+            supplierName,
+            supplierAddress,
+            placeOfSupply,
+            buyerName,
+            buyerAddress,
+            itemName,
+            hsn,
+            quantity: parseFloat(quantity),
+            rate: parseFloat(rate),
+            vehicleNumber,
+            notes,
+            weightmentSlipPath
+        });
+
+        // Save PDF to uploads directory
+        const pdfFileName = `insurance-${Date.now()}.pdf`;
+        const pdfPath = path.join(__dirname, '../uploads', pdfFileName);
+        fs.writeFileSync(pdfPath, pdfBuffer);
+
+        // Create and save insurance form
         const insuranceForm = new InsuranceForm({
             user: req.user.id,
             supplierName,
@@ -45,26 +124,29 @@ const createInsuranceForm = async (req, res) => {
             buyerAddress,
             itemName,
             hsn,
-            quantity,
-            rate,
-            amount,
+            quantity: parseFloat(quantity),
+            rate: parseFloat(rate),
+            amount: parseFloat(quantity) * parseFloat(rate),
             vehicleNumber,
             notes,
-            weightmentSlipURL,
-            pdfURL,
+            weightmentSlipURL: weightmentSlipPath,
+            pdfURL: `/uploads/${pdfFileName}`,
         });
 
         await insuranceForm.save();
 
         res.status(201).json({
             success: true,
-            data: insuranceForm,
+            data: {
+                ...insuranceForm.toObject(),
+                pdfURL: `/uploads/${pdfFileName}`
+            }
         });
     } catch (error) {
         console.error('Create insurance form error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
+            message: 'Server error: ' + error.message,
         });
     }
 };

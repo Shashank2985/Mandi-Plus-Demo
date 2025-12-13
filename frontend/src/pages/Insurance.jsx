@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import jsPDF from 'jspdf';
 
 const Insurance = () => {
     const [formData, setFormData] = useState({
@@ -31,68 +30,20 @@ const Insurance = () => {
         setWeightmentSlip(e.target.files[0]);
     };
 
-    const generatePDF = async () => {
-        const pdf = new jsPDF();
-
-        // Add title
-        pdf.setFontSize(20);
-        pdf.text('Insurance Form', 20, 30);
-
-        // Add form data
-        pdf.setFontSize(12);
-        let yPosition = 50;
-
-        pdf.text(`Supplier Name: ${formData.supplierName}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Supplier Address: ${formData.supplierAddress}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Place of Supply: ${formData.placeOfSupply}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Buyer Name: ${formData.buyerName}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Buyer Address: ${formData.buyerAddress}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Item Name: ${formData.itemName}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`HSN: ${formData.hsn}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Quantity: ${formData.quantity}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Rate: ${formData.rate}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Amount: ₹${formData.quantity * formData.rate}`, 20, yPosition);
-        yPosition += 10;
-        pdf.text(`Vehicle Number: ${formData.vehicleNumber}`, 20, yPosition);
-        yPosition += 10;
-
-        if (formData.notes) {
-            pdf.text(`Notes: ${formData.notes}`, 20, yPosition);
-        }
-
-        // Add timestamp
-        pdf.setFontSize(10);
-        pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280);
-
-        // Return PDF as blob
-        return pdf.output('blob');
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
 
         try {
-            // Generate PDF
-            const pdfBlob = await generatePDF();
-            const pdfFile = new File([pdfBlob], 'insurance-form.pdf', { type: 'application/pdf' });
-
-            // Prepare FormData
             const submitData = new FormData();
+
+            // Append all form fields
             Object.keys(formData).forEach(key => {
                 submitData.append(key, formData[key]);
             });
-            submitData.append('pdfFile', pdfFile);
+
+            // Append weightment slip if exists
             if (weightmentSlip) {
                 submitData.append('weightmentSlip', weightmentSlip);
             }
@@ -112,12 +63,18 @@ const Insurance = () => {
                 },
             });
 
-            setMessage('Insurance form submitted successfully!');
-            // Optionally navigate back to home
-            setTimeout(() => navigate('/home'), 2000);
+            setMessage('Insurance form submitted successfully! PDF is being generated...');
+
+            // Redirect to view the generated PDF
+            if (response.data.data.pdfURL) {
+                window.open(`http://localhost:5000${response.data.data.pdfURL}`, '_blank');
+            }
+
+            // Navigate back to home after a delay
+            setTimeout(() => navigate('/home'), 3000);
         } catch (error) {
             console.error('Submission error:', error);
-            setMessage(error.response?.data?.message || 'Submission failed');
+            setMessage(error.response?.data?.message || 'Submission failed. Please try again.');
         } finally {
             setLoading(false);
         }

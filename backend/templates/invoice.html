@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Insurance Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #000;
+        }
+
+        h2,
+        h3,
+        h4 {
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-section {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .supplier-block {
+            width: 70%;
+        }
+
+        .supplier-block h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .pos-box {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .invoice-box {
+            border: 2px dashed #999;
+            padding: 10px 20px;
+            font-size: 20px;
+            height: fit-content;
+            font-weight: bold;
+        }
+
+        .grid-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .grid-box {
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .value {
+            font-size: 14px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .table-section {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .stamp-box {
+            border: 1px solid #ddd;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .stamp-box img {
+            width: 150px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP SECTION -->
+    <div class="top-section">
+        <div class="supplier-block">
+            <h2>Supplier Name - {{supplierName}}</h2>
+            <div class="pos-box">
+                <strong>Place of Supply:</strong> {{placeOfSupply}}
+            </div>
+        </div>
+
+        <div class="invoice-box">
+            INVOICE
+        </div>
+    </div>
+
+    <!-- GRID INFO SECTION -->
+    <div class="grid-section">
+        <div class="grid-box">
+            <div class="label">Invoice Number</div>
+            <div class="value">{{invoiceNumber}}</div>
+
+            <div class="label" style="margin-top:10px;">Invoice Date</div>
+            <div class="value">{{date}}</div>
+
+            <div class="label" style="margin-top:10px;">Terms</div>
+            <div class="value">CUSTOM</div>
+        </div>
+
+        <div class="grid-box">
+            <div class="label">Supplier Address</div>
+            <div class="value">{{supplierAddress}}</div>
+        </div>
+    </div>
+
+    <!-- BILL TO / SHIP TO -->
+    <div class="two-col">
+        <div class="grid-box">
+            <h3>Bill To</h3>
+            <p>{{buyerName}}<br>{{buyerAddress}}</p>
+        </div>
+
+        <div class="grid-box">
+            <h3>Ship To</h3>
+            <p>{{buyerName}}<br>{{buyerAddress}}</p>
+        </div>
+    </div>
+
+    <!-- ITEM TABLE -->
+    <div class="table-section">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Item & Description</th>
+                    <th>HSN/SAC</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>{{itemName}}</td>
+                    <td>{{hsn}}</td>
+                    <td>{{quantity}}</td>
+                    <td>{{rate}}</td>
+                    <td>{{amount}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- NOTES SECTION (PDF EXACT STYLE) -->
+    <div style="margin-top: 20px;">
+        <div style="
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            display: inline-block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+        ">
+            Notes
+        </div>
+
+        <p style="font-size: 14px; line-height: 1.5; margin-top: 0;">
+            This vehicle is transporting Tender Coconuts from Supplier: {{supplierName}}
+            to Buyer: {{buyerName}}.<br>
+            In case of any accident, loss, or damage during transit supplier shall be
+            treated as the insured person and will be entitled to receive all claim
+            amounts for the damaged goods.
+        </p>
+    </div>
+
+    <!-- WEIGHTMENT SLIP -->
+    {{#if weightmentSlip}}
+    <div style="margin-top: 20px; page-break-inside: avoid;">
+        <div style="
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            display: inline-block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            width: 100%;
+        ">
+            Weightment Slip
+        </div>
+
+        <div style="text-align: center; margin: 10px 0 20px 0;">
+            <img src="{{weightmentSlip}}" alt="Weightment Slip"
+                style="max-width: 100%; max-height: 400px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">Weightment Slip - {{itemName}} | Qty: {{quantity}}
+            </p>
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- STAMP SECTION -->
+    <div class="stamp-box">
+        <img src="{{stampImage}}" alt="Stamp">
+        <p>Authorized Signature</p>
+    </div>
+
+</body>
+
+</html>
