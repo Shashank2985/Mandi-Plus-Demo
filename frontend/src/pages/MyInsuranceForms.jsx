@@ -1,103 +1,168 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const MyInsuranceForms = () => {
-    const [forms, setForms] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+const steps = [
+  { key: "supplierName", label: "Supplier Name" },
+  { key: "buyerName", label: "Buyer Name" },
+  { key: "quantity", label: "Quantity" },
+  { key: "rate", label: "Rate" },
+  { key: "amount", label: "Amount" },
+  { key: "vehicleNumber", label: "Vehicle Number" },
+];
 
-    useEffect(() => {
-        const fetchForms = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    navigate('/');
-                    return;
-                }
+const InsuranceChatForm = () => {
+  const navigate = useNavigate();
+  const chatEndRef = useRef(null);
 
-                const response = await axios.get('http://localhost:5000/api/insurance/my-forms', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
+  const [currentStep, setCurrentStep] = useState(0);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: `Enter ${steps[0].label}` },
+  ]);
 
-                setForms(response.data.data);
-            } catch (err) {
-                setError('Failed to load insurance forms');
-                console.error('Fetch forms error:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typing]);
 
-        fetchForms();
-    }, [navigate]);
+  const handleSend = () => {
+    if (!input.trim()) return;
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-xl">Loading...</div>
-            </div>
-        );
+    const step = steps[currentStep];
+
+    setMessages((prev) => [...prev, { sender: "user", text: input }]);
+
+    const updatedFormData = {
+      ...formData,
+      [step.key]: input,
+    };
+
+    setFormData(updatedFormData);
+    setInput("");
+    setTyping(true);
+
+    setTimeout(() => {
+      setTyping(false);
+
+      if (currentStep + 1 < steps.length) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: `Enter ${steps[currentStep + 1].label}`,
+          },
+        ]);
+        setCurrentStep((prev) => prev + 1);
+      } else {
+        submitForm(updatedFormData);
+      }
+    }, 600);
+  };
+
+  // 🔒 Backend logic unchanged
+  const submitForm = async (data) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:5000/api/insurance/create",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Form submitted successfully." },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Submission failed. Please try again." },
+      ]);
+      console.error(error);
     }
+  };
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-red-600">{error}</div>
-            </div>
-        );
-    }
+  return (
+    <div className="min-h-screen bg-gray-900 flex md:items-center md:justify-center">
+      {/* Chat Container */}
+      <div className="flex flex-col w-full md:max-w-md md:h-[90vh] bg-[#efeae2] md:rounded-xl md:shadow-xl">
 
-    return (
-        <div className="min-h-screen bg-gray-100 p-4">
-            <div className="max-w-4xl mx-auto">
-                <h1 className="text-2xl font-bold mb-6">My Insurance Forms</h1>
-
-                {forms.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-gray-600">No insurance forms submitted yet.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {forms.map((form) => (
-                            <div key={form._id} className="bg-white rounded-lg shadow-md p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <h3 className="font-semibold text-lg mb-2">{form.itemName}</h3>
-                                        <p><strong>Supplier:</strong> {form.supplierName}</p>
-                                        <p><strong>Buyer:</strong> {form.buyerName}</p>
-                                        <p><strong>Quantity:</strong> {form.quantity}</p>
-                                        <p><strong>Rate:</strong> {form.rate}</p>
-                                        <p><strong>Amount:</strong> ₹{form.amount}</p>
-                                        <p><strong>Vehicle:</strong> {form.vehicleNumber}</p>
-                                    </div>
-                                    <div>
-                                        <p><strong>HSN:</strong> {form.hsn}</p>
-                                        <p><strong>Place of Supply:</strong> {form.placeOfSupply}</p>
-                                        <p><strong>Submitted:</strong> {new Date(form.createdAt).toLocaleDateString()}</p>
-                                        {form.notes && <p><strong>Notes:</strong> {form.notes}</p>}
-                                        {form.pdfURL && (
-                                            <a
-                                                href={`http://localhost:5000/${form.pdfURL}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline"
-                                            >
-                                                Download PDF
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-[#075e54] text-white px-4 py-3 flex justify-between items-center">
+          <div>
+            <h1 className="font-semibold text-base">Insurance Assistant</h1>
+            <p className="text-xs opacity-80">
+              Step {currentStep + 1} of {steps.length}
+            </p>
+          </div>
+          <span className="text-xs opacity-80">Online</span>
         </div>
-    );
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-[80%] px-4 py-2 text-sm rounded-lg shadow
+                ${
+                  msg.sender === "user"
+                    ? "bg-[#dcf8c6] rounded-br-none"
+                    : "bg-white rounded-bl-none"
+                }`}
+              >
+                {msg.text}
+              </div>
+            </div>
+          ))}
+
+          {typing && (
+            <div className="flex justify-start">
+              <div className="bg-white px-4 py-2 rounded-lg text-xs shadow animate-pulse">
+                typing...
+              </div>
+            </div>
+          )}
+
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="sticky bottom-0 bg-white p-3 flex gap-2 border-t">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Type your answer..."
+            className="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <button
+            onClick={handleSend}
+            className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-green-600 active:scale-95 transition"
+          >
+            Send
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
 };
 
-export default MyInsuranceForms;
+export default InsuranceChatForm;
