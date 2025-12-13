@@ -1,205 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import Select from '../components/Select';
-import { registerUser } from '../api/auth';
-
-const indianStates = [
-    { value: 'Andhra Pradesh', label: 'Andhra Pradesh' },
-    { value: 'Arunachal Pradesh', label: 'Arunachal Pradesh' },
-    { value: 'Assam', label: 'Assam' },
-    { value: 'Bihar', label: 'Bihar' },
-    { value: 'Chhattisgarh', label: 'Chhattisgarh' },
-    { value: 'Goa', label: 'Goa' },
-    { value: 'Gujarat', label: 'Gujarat' },
-    { value: 'Haryana', label: 'Haryana' },
-    { value: 'Himachal Pradesh', label: 'Himachal Pradesh' },
-    { value: 'Jharkhand', label: 'Jharkhand' },
-    { value: 'Karnataka', label: 'Karnataka' },
-    { value: 'Kerala', label: 'Kerala' },
-    { value: 'Madhya Pradesh', label: 'Madhya Pradesh' },
-    { value: 'Maharashtra', label: 'Maharashtra' },
-    { value: 'Manipur', label: 'Manipur' },
-    { value: 'Meghalaya', label: 'Meghalaya' },
-    { value: 'Mizoram', label: 'Mizoram' },
-    { value: 'Nagaland', label: 'Nagaland' },
-    { value: 'Odisha', label: 'Odisha' },
-    { value: 'Punjab', label: 'Punjab' },
-    { value: 'Rajasthan', label: 'Rajasthan' },
-    { value: 'Sikkim', label: 'Sikkim' },
-    { value: 'Tamil Nadu', label: 'Tamil Nadu' },
-    { value: 'Telangana', label: 'Telangana' },
-    { value: 'Tripura', label: 'Tripura' },
-    { value: 'Uttar Pradesh', label: 'Uttar Pradesh' },
-    { value: 'Uttarakhand', label: 'Uttarakhand' },
-    { value: 'West Bengal', label: 'West Bengal' },
-    { value: 'Delhi', label: 'Delhi' },
-    { value: 'Jammu and Kashmir', label: 'Jammu and Kashmir' },
-    { value: 'Ladakh', label: 'Ladakh' },
-    { value: 'Puducherry', label: 'Puducherry' },
-    { value: 'Chandigarh', label: 'Chandigarh' },
-    { value: 'Andaman and Nicobar Islands', label: 'Andaman and Nicobar Islands' },
-    { value: 'Dadra and Nagar Haveli and Daman and Diu', label: 'Dadra and Nagar Haveli and Daman and Diu' },
-    { value: 'Lakshadweep', label: 'Lakshadweep' },
-];
-
-const userCategories = [
-    { value: 'buyer', label: 'Buyer' },
-    { value: 'seller', label: 'Seller' },
-    { value: 'transporter', label: 'Transporter' },
-];
-
-const countryCodes = [
-    { value: '+91', label: 'India (+91)' },
-    { value: '+1', label: 'USA (+1)' },
-    { value: '+44', label: 'UK (+44)' },
-    // Add more as needed
-];
 
 const Register = () => {
-    const [formData, setFormData] = useState({
-        countryCode: '+91',
-        mobileNumber: '',
-        category: '',
-        state: '',
-        otp: '',
-    });
-    const [otpSent, setOtpSent] = useState(false);
-    const [otpVerified, setOtpVerified] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otpSent, setOtpSent] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const inputsRef = useRef([]);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
+  const handleSendOtp = () => {
+    if (mobile.length !== 10) {
+      setError('Enter valid mobile number');
+      return;
+    }
+    setOtpSent(true);
+    setError('');
+  };
 
-    const handleSendOtp = () => {
-        if (!formData.mobileNumber) {
-            setError('Please enter phone number');
-            return;
-        }
-        setOtpSent(true);
-        setError('');
-    };
+  const handleOtpChange = (value, index) => {
+    if (!/^\d?$/.test(value)) return;
 
-    const handleOtpChange = (e) => {
-        const value = e.target.value;
-        if (value.length <= 6 && /^\d*$/.test(value)) {
-            setFormData({ ...formData, otp: value });
-            if (value === '000000') {
-                setOtpVerified(true);
-            } else {
-                setOtpVerified(false);
-            }
-        }
-    };
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
 
-    const handleRegister = async () => {
-        if (!otpVerified) {
-            setError('Please verify OTP first');
-            return;
-        }
-        if (!formData.category || !formData.state) {
-            setError('Please fill all fields');
-            return;
-        }
-        setLoading(true);
-        setError('');
-        try {
-            const data = {
-                mobileNumber: formData.countryCode + formData.mobileNumber,
-                category: formData.category,
-                state: formData.state,
-            };
-            const response = await registerUser(data);
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            navigate('/home');
-        } catch (err) {
-            setError(err.message || 'Registration failed');
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (value && index < 3) {
+      inputsRef.current[index + 1].focus();
+    }
 
-    return (
-        <div className="min-h-screen bg-gray-100 flex flex-col">
-            {/* Header */}
-            <div className="bg-[#25D366] text-white py-4 px-6 shadow-md">
-                <h1 className="text-xl font-bold">Register</h1>
+    if (newOtp.join('') === '0000') {
+      navigate('/home');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black/40 flex items-center justify-center">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-lg relative">
+        
+        {/* Close Button */}
+        <button className="absolute right-4 top-4 text-2xl font-bold">
+          ×
+        </button>
+
+        <h2 className="text-lg font-semibold mb-1">
+          {otpSent ? 'Verify your OTP' : 'Welcome to DeHaat Kisan App'}
+        </h2>
+
+        <p className="text-sm text-gray-500 mb-6">
+          {otpSent ? `Sent via SMS to ${mobile}` : 'Login or Register'}
+        </p>
+
+        {!otpSent && (
+          <>
+            <div className="flex items-center border rounded-xl px-4 py-3 mb-4 bg-gray-100">
+              <input
+                type="tel"
+                maxLength="10"
+                placeholder="Enter Mobile Number"
+                className="bg-transparent outline-none flex-1"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+              />
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 flex items-center justify-center p-4">
-                <Card className="w-full max-w-md">
-                    <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Create Account</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              By continuing, I agree to{' '}
+              <span className="text-green-600">Terms of Use</span> &{' '}
+              <span className="text-green-600">Privacy Policy</span>
+            </p>
 
-                    {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            <button
+              onClick={handleSendOtp}
+              className="w-full bg-green-600 text-white py-3 rounded-full font-semibold"
+            >
+              CONTINUE
+            </button>
+          </>
+        )}
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="text"
-                                    name="mobileNumber"
-                                    placeholder="Enter phone number"
-                                    value={formData.mobileNumber}
-                                    onChange={handleInputChange}
-                                    className="flex-1"
-                                />
-                            </div>
-                        </div>
-                        <Select
-                            name="category"
-                            placeholder="Select User Category"
-                            options={userCategories}
-                            value={formData.category}
-                            onChange={handleInputChange}
-                        />
-
-                        <Select
-                            name="state"
-                            placeholder="Select State"
-                            options={indianStates}
-                            value={formData.state}
-                            onChange={handleInputChange}
-                        />
-
-                        {!otpSent && (
-                            <Button onClick={handleSendOtp} className="w-full">
-                                Send OTP
-                            </Button>
-                        )}
-
-                        {otpSent && (
-                            <>
-                                <Input
-                                    type="text"
-                                    name="otp"
-                                    placeholder="Enter 6-digit OTP"
-                                    value={formData.otp}
-                                    onChange={handleOtpChange}
-                                    maxLength={6}
-                                />
-                                <Button
-                                    onClick={handleRegister}
-                                    disabled={!otpVerified || loading}
-                                    className="w-full"
-                                >
-                                    {loading ? 'Registering...' : 'Register'}
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </Card>
+        {otpSent && (
+          <>
+            <div className="flex justify-between mb-4">
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => (inputsRef.current[i] = el)}
+                  type="text"
+                  maxLength="1"
+                  value={digit}
+                  onChange={(e) => handleOtpChange(e.target.value, i)}
+                  className="w-14 h-14 text-center text-xl border rounded-xl bg-gray-100"
+                />
+              ))}
             </div>
-        </div>
-    );
+
+            <p className="text-xs text-gray-500 mb-4">
+              Didn’t receive OTP?{' '}
+              <span className="text-green-600 font-medium cursor-pointer">
+                Send again
+              </span>
+            </p>
+
+            <button className="w-full bg-green-600 text-white py-3 rounded-full font-semibold">
+              VERIFY AND CONTINUE
+            </button>
+          </>
+        )}
+
+        {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+      </div>
+    </div>
+  );
 };
 
 export default Register;
