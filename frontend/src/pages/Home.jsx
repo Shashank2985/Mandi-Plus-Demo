@@ -12,42 +12,93 @@ const Home = () => {
     }, [navigate]);
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const mobileNumber = user.mobileNumber || 'User';
+    const username = user.mobileNumber || 'User';
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col">
-            {/* Header */}
-            <div className="bg-[#25D366] text-white py-4 px-6 shadow-md">
-                <h1 className="text-xl font-bold">Mandi Plus</h1>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+
+            {/* Greeting Section */}
+            <div className="bg-linear-to-r from-green-900 to-green-700 text-white py-6 px-6 rounded-b-xl mb-5">
+                <div className="flex items-center space-x-4">
+                    <div>
+                        <h2 className="text-xl font-bold">Welcome, {username}!</h2>
+                    </div>
+                    {/* Right: Logout */}
+                    <div className="flex-1 text-right">
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-500 text-white px-3 py-1 rounded-full text-sm flex items-center space-x-1 ml-auto"
+                        >
+                            <span>🚪</span>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md text-center">
-                    <div className="mb-6">
-                        <div className="w-16 h-16 bg-[#25D366] rounded-full mx-auto flex items-center justify-center mb-4">
-                            <span className="text-white text-2xl font-bold">M</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome, {mobileNumber}!</h2>
-                        <p className="text-gray-600">You have successfully registered and are now logged in.</p>
+            {/* Services Title */}
+            <div className="grid grid-cols-2 gap-x-4 mx-2 my-4 py-3">
+                <h3 className="text-lg font-bold text-gray-800">📋 Our Services</h3>
+                <p className="text-sm text-gray-500">Quick access to everything</p>
+            </div>
+
+            {/* Services Grid */}
+            <div className="px-6 pb-20">
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Card 1 */}
+                    <div className="bg-yellow-100 rounded-2xl p-4 shadow-sm">
+                        <div className="text-3xl mb-2">📦</div>
+                        <h4 className="font-bold text-green-800">Track your deliveries</h4>
+                        <p className="text-xs text-gray-600">Realtime GPS updates</p>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="font-semibold text-gray-800 mb-2">What's Next?</h3>
-                            <ul className="text-sm text-gray-600 space-y-1">
-                                <li>• Browse mandi prices</li>
-                                <li>• Connect with buyers/sellers</li>
-                                <li>• Manage your transactions</li>
-                            </ul>
-                        </div>
+                    {/* Card 2 */}
+                    <div className="bg-orange-100 rounded-2xl p-4 shadow-sm">
+                        <div className="text-3xl mb-2">🛡️</div>
+                        <h4 className="font-bold text-green-800">Insurance</h4>
+                        <p className="text-xs text-gray-600">Get instant policy</p>
+                    </div>
 
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="w-full bg-[#25D366] text-white font-semibold py-2 px-4 rounded-lg hover:bg-[#20c157] transition-colors"
-                        >
-                            Explore App
-                        </button>
+                    {/* Card 3 */}
+                    <div className="bg-blue-100 rounded-2xl p-4 shadow-sm">
+                        <div className="text-3xl mb-2">📄</div>
+                        <h4 className="font-bold text-green-800">Generate Invoices</h4>
+                        <p className="text-xs text-gray-600">Simplify your billing</p>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="bg-green-100 rounded-2xl p-4 shadow-sm">
+                        <div className="text-3xl mb-2">💳</div>
+                        <h4 className="font-bold text-green-800">Payment Records</h4>
+                        <p className="text-xs text-gray-600">See your past payments</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Navigation */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2">
+                <div className="grid grid-cols-4 text-center">
+                    <div className="text-green-600">
+                        <div className="text-xl">🏠</div>
+                        <p className="text-xs font-medium">Home</p>
+                    </div>
+                    <div className="text-gray-400">
+                        <div className="text-xl">📦</div>
+                        <p className="text-xs">Orders</p>
+                    </div>
+                    <div className="text-gray-400">
+                        <div className="text-xl">📜</div>
+                        <p className="text-xs">History</p>
+                    </div>
+                    <div className="text-gray-400">
+                        <div className="text-xl">☰</div>
+                        <p className="text-xs">Menu</p>
                     </div>
                 </div>
             </div>
