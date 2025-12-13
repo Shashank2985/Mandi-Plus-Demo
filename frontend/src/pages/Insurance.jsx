@@ -1,239 +1,222 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Paperclip } from "lucide-react";
 
-const Insurance = () => {
-    const [formData, setFormData] = useState({
-        supplierName: '',
-        supplierAddress: '',
-        placeOfSupply: '',
-        buyerName: '',
-        buyerAddress: '',
-        itemName: '',
-        hsn: '',
-        quantity: '',
-        rate: '',
-        vehicleNumber: '',
-        notes: '',
-    });
-    const [weightmentSlip, setWeightmentSlip] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const navigate = useNavigate();
+const steps = [
+  { key: "supplierName", label: "Supplier Name" },
+  { key: "supplierAddress", label: "Supplier Address" },
+  { key: "placeOfSupply", label: "Place of Supply" },
+  { key: "buyerName", label: "Buyer Name" },
+  { key: "buyerAddress", label: "Buyer Address" },
+  { key: "itemName", label: "Item Name" },
+  { key: "hsn", label: "HSN Code" },
+  { key: "quantity", label: "Quantity" },
+  { key: "rate", label: "Rate" },
+  { key: "vehicleNumber", label: "Vehicle Number" },
+  { key: "notes", label: "Notes (Optional)" },
+  { key: "weightmentSlip", label: "Upload Weightment Slip" },
+];
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
+const InsuranceWhatsAppUI = () => {
+  const navigate = useNavigate();
+  const chatEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-    const handleFileChange = (e) => {
-        setWeightmentSlip(e.target.files[0]);
-    };
+  const [step, setStep] = useState(0);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage('');
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: `Enter ${steps[0].label}` },
+  ]);
 
-        try {
-            const submitData = new FormData();
+  const [formData, setFormData] = useState({});
+  const [weightmentSlip, setWeightmentSlip] = useState(null);
 
-            // Append all form fields
-            Object.keys(formData).forEach(key => {
-                submitData.append(key, formData[key]);
-            });
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typing]);
 
-            // Append weightment slip if exists
-            if (weightmentSlip) {
-                submitData.append('weightmentSlip', weightmentSlip);
-            }
+  const handleSend = () => {
+    if (!input.trim()) return;
 
-            // Get token
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/');
-                return;
-            }
+    /* Confirmation Logic */
+    if (awaitingConfirmation) {
+      setMessages((prev) => [...prev, { sender: "user", text: input }]);
 
-            // Submit to backend
-            const response = await axios.post('http://localhost:5000/api/insurance/create', submitData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+      if (input === "1") {
+        submitForm();
+      } else if (input === "2") {
+        setWeightmentSlip(null);
+        submitForm();
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: "Invalid input. Type 1 or 2." },
+        ]);
+      }
 
-            setMessage('Insurance form submitted successfully! PDF is being generated...');
+      setInput("");
+      return;
+    }
 
-            // Redirect to view the generated PDF
-            if (response.data.data.pdfURL) {
-                window.open(`http://localhost:5000${response.data.data.pdfURL}`, '_blank');
-            }
+    const current = steps[step];
+    setMessages((prev) => [...prev, { sender: "user", text: input }]);
+    setFormData((prev) => ({ ...prev, [current.key]: input }));
+    setInput("");
+    setTyping(true);
 
-            // Navigate back to home after a delay
-            setTimeout(() => navigate('/home'), 3000);
-        } catch (error) {
-            console.error('Submission error:', error);
-            setMessage(error.response?.data?.message || 'Submission failed. Please try again.');
-        } finally {
-            setLoading(false);
+    setTimeout(() => {
+      setTyping(false);
+      if (step + 1 < steps.length) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: `Enter ${steps[step + 1].label}` },
+        ]);
+        setStep(step + 1);
+      }
+    }, 500);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setWeightmentSlip(file);
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: `📎 ${file.name}` },
+      {
+        sender: "bot",
+        text:
+          "Weightment slip uploaded.\n\nType:\n1️⃣ Submit Insurance Form\n2️⃣ Skip upload & Submit\n\n(You can also re-upload using 📎)",
+      },
+    ]);
+
+    setAwaitingConfirmation(true);
+  };
+
+  // 🔒 BACKEND LOGIC — AS IS
+  const submitForm = async () => {
+    try {
+      setLoading(true);
+
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) =>
+        data.append(key, value)
+      );
+      if (weightmentSlip) data.append("weightmentSlip", weightmentSlip);
+
+      const token = localStorage.getItem("token");
+      if (!token) return navigate("/");
+
+      const response = await axios.post(
+        "http://localhost:5000/api/insurance/create",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
         }
-    };
+      );
 
-    return (
-        <div className="min-h-screen bg-gray-100 p-4">
-            <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-                <h1 className="text-2xl font-bold mb-6">Insurance Form</h1>
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Insurance submitted successfully." },
+      ]);
 
-                {message && (
-                    <div className={`mb-4 p-3 rounded ${message.includes('success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {message}
-                    </div>
-                )}
+      if (response.data.data?.pdfURL) {
+        window.open(
+          `http://localhost:5000${response.data.data.pdfURL}`,
+          "_blank"
+        );
+      }
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Supplier Name</label>
-                            <input
-                                type="text"
-                                name="supplierName"
-                                value={formData.supplierName}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Supplier Address</label>
-                            <input
-                                type="text"
-                                name="supplierAddress"
-                                value={formData.supplierAddress}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Place of Supply</label>
-                            <input
-                                type="text"
-                                name="placeOfSupply"
-                                value={formData.placeOfSupply}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Buyer Name</label>
-                            <input
-                                type="text"
-                                name="buyerName"
-                                value={formData.buyerName}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Buyer Address</label>
-                            <input
-                                type="text"
-                                name="buyerAddress"
-                                value={formData.buyerAddress}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Item Name</label>
-                            <input
-                                type="text"
-                                name="itemName"
-                                value={formData.itemName}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">HSN</label>
-                            <input
-                                type="text"
-                                name="hsn"
-                                value={formData.hsn}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Quantity</label>
-                            <input
-                                type="number"
-                                name="quantity"
-                                value={formData.quantity}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Rate</label>
-                            <input
-                                type="number"
-                                name="rate"
-                                value={formData.rate}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Vehicle Number</label>
-                            <input
-                                type="text"
-                                name="vehicleNumber"
-                                value={formData.vehicleNumber}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Notes</label>
-                        <textarea
-                            name="notes"
-                            value={formData.notes}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            rows="3"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Weightment Slip (Optional)</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                        {loading ? 'Submitting...' : 'Submit Insurance Form'}
-                    </button>
-                </form>
-            </div>
+      setTimeout(() => navigate("/home"), 2500);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Submission failed. Try again." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 flex md:items-center md:justify-center">
+      <div className="flex flex-col w-full md:max-w-md md:h-[90vh] bg-[#efeae2] md:rounded-xl">
+
+        {/* Header */}
+        <div className="bg-[#075e54] text-white px-4 py-3">
+          <h2 className="font-semibold">Insurance Assistant</h2>
         </div>
-    );
+
+        {/* Chat */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`px-4 py-2 max-w-[80%] text-sm rounded-lg shadow ${
+                  msg.sender === "user"
+                    ? "bg-[#dcf8c6] rounded-br-none"
+                    : "bg-white rounded-bl-none"
+                }`}
+              >
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="bg-white p-3 border-t flex items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="text-gray-500"
+          >
+            <Paperclip size={20} />
+          </button>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*,application/pdf"
+            onChange={handleFileUpload}
+          />
+
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Type a message..."
+            className="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none"
+            disabled={loading}
+          />
+
+          <button
+            onClick={handleSend}
+            className="bg-green-500 text-white px-4 py-2 rounded-full text-sm"
+            disabled={loading}
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-export default Insurance;
+export default InsuranceWhatsAppUI;

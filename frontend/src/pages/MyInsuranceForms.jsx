@@ -22,6 +22,7 @@ const InsuranceChatForm = () => {
     const [messages, setMessages] = useState([
         { sender: "bot", text: `Enter ${steps[0].label}` },
     ]);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -61,96 +62,85 @@ const InsuranceChatForm = () => {
         }, 600);
     };
 
-    // 🔒 Backend logic unchanged
+    // 🔒 Backend submit logic
     const submitForm = async (data) => {
         try {
+            setSubmitting(true);
             const token = localStorage.getItem("token");
+
             if (!token) {
                 navigate("/");
                 return;
             }
 
-            const response = await axios.get('http://localhost:5000/api/insurance/my-forms', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+            await axios.post(
+                "http://localhost:5000/api/insurance/create",
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
-            setForms(response.data.data);
-        } catch (err) {
-            setError('Failed to load insurance forms');
-            console.error('Fetch forms error:', err);
+            setMessages((prev) => [
+                ...prev,
+                { sender: "bot", text: "Form submitted successfully ✅" },
+            ]);
+        } catch (error) {
+            setMessages((prev) => [
+                ...prev,
+                { sender: "bot", text: "Submission failed ❌" },
+            ]);
+            console.error("Submit error:", error);
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
-    fetchForms();
-}, [navigate]);
-
-if (loading) {
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="text-xl">Loading...</div>
-        </div>
-    );
-}
-
-if (error) {
-    return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="text-red-600">{error}</div>
-        </div>
-    );
-}
-
-return (
-    <div className="min-h-screen bg-gray-100 p-4">
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">My Insurance Forms</h1>
-
-            {forms.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                    <p className="text-gray-600">No insurance forms submitted yet.</p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {forms.map((form) => (
-                        <div key={form._id} className="bg-white rounded-lg shadow-md p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <h3 className="font-semibold text-lg mb-2">{form.itemName}</h3>
-                                    <p><strong>Supplier:</strong> {form.supplierName}</p>
-                                    <p><strong>Buyer:</strong> {form.buyerName}</p>
-                                    <p><strong>Quantity:</strong> {form.quantity}</p>
-                                    <p><strong>Rate:</strong> {form.rate}</p>
-                                    <p><strong>Amount:</strong> ₹{form.amount}</p>
-                                    <p><strong>Vehicle:</strong> {form.vehicleNumber}</p>
-                                </div>
-                                <div>
-                                    <p><strong>HSN:</strong> {form.hsn}</p>
-                                    <p><strong>Place of Supply:</strong> {form.placeOfSupply}</p>
-                                    <p><strong>Submitted:</strong> {new Date(form.createdAt).toLocaleDateString()}</p>
-                                    {form.notes && <p><strong>Notes:</strong> {form.notes}</p>}
-                                    {form.pdfURL && (
-                                        <a
-                                            href={`http://localhost:5000${form.pdfURL}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline inline-block mt-2 px-4 py-2 bg-blue-50 rounded hover:bg-blue-100"
-                                        >
-                                            View/Download PDF
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-4 flex flex-col">
+                <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                    {messages.map((msg, idx) => (
+                        <div
+                            key={idx}
+                            className={`px-4 py-2 rounded-lg max-w-[80%] ${
+                                msg.sender === "user"
+                                    ? "bg-blue-600 text-white ml-auto"
+                                    : "bg-gray-200 text-gray-800"
+                            }`}
+                        >
+                            {msg.text}
                         </div>
                     ))}
+                    {typing && (
+                        <div className="text-sm text-gray-500">Bot is typing...</div>
+                    )}
+                    <div ref={chatEndRef} />
                 </div>
-            )}
+
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Type here..."
+                        className="flex-1 border rounded-lg px-3 py-2 focus:outline-none"
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        disabled={submitting}
+                    />
+                    <button
+                        onClick={handleSend}
+                        disabled={submitting}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        Send
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-);
+    );
 };
 
 export default InsuranceChatForm;
