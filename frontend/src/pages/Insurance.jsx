@@ -1,8 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ArrowUpIcon } from '@heroicons/react/24/outline';
+
+const questions = [
+    { field: 'supplierName', text: "What is the supplier's name?", type: 'text' },
+    { field: 'supplierAddress', text: "What is the supplier's address?", type: 'text' },
+    { field: 'placeOfSupply', text: 'What is the place of supply?', type: 'text' },
+    { field: 'buyerName', text: "What is the buyer's name?", type: 'text' },
+    { field: 'buyerAddress', text: "What is the buyer's address?", type: 'text' },
+    { field: 'itemName', text: 'What is the item name?', type: 'text' },
+    { field: 'hsn', text: 'What is the HSN code?', type: 'text' },
+    { field: 'quantity', text: 'What is the quantity?', type: 'number' },
+    { field: 'rate', text: 'What is the rate?', type: 'number' },
+    { field: 'vehicleNumber', text: 'What is the vehicle number?', type: 'text' },
+    { field: 'notes', text: 'Any additional notes? (Optional)', type: 'text', optional: true },
+    { field: 'weightmentSlip', text: 'Please upload the weightment slip (Optional)', type: 'file', optional: true },
+];
 
 const Insurance = () => {
+    const navigate = useNavigate();
+    const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
+
     const [formData, setFormData] = useState({
         supplierName: '',
         supplierAddress: '',
@@ -16,221 +36,227 @@ const Insurance = () => {
         vehicleNumber: '',
         notes: '',
     });
+
     const [weightmentSlip, setWeightmentSlip] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const navigate = useNavigate();
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [inputValue, setInputValue] = useState('');
+    const [messages, setMessages] = useState([
+        { text: `Welcome! ${questions[0].text}`, sender: 'bot' },
+    ]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
 
-    const handleFileChange = (e) => {
-        setWeightmentSlip(e.target.files[0]);
-    };
+    /* =========================
+       CENTRAL SUBMIT FUNCTION
+       ========================= */
+    const submitInsuranceForm = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage('');
+        setMessages(prev => [
+            ...prev,
+            { text: 'Submitting insurance form and generating PDF...', sender: 'bot' },
+        ]);
 
         try {
             const submitData = new FormData();
 
-            // Append all form fields
             Object.keys(formData).forEach(key => {
                 submitData.append(key, formData[key]);
             });
 
-            // Append weightment slip if exists
             if (weightmentSlip) {
                 submitData.append('weightmentSlip', weightmentSlip);
             }
 
-            // Get token
             const token = localStorage.getItem('token');
             if (!token) {
                 navigate('/');
                 return;
             }
 
-            // Submit to backend
-            const response = await axios.post('http://localhost:5000/api/insurance/create', submitData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await axios.post(
+                'http://localhost:5000/api/insurance/create',
+                submitData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
 
-            setMessage('Insurance form submitted successfully! PDF is being generated...');
+            setMessages(prev => [
+                ...prev,
+                { text: 'Insurance form submitted successfully!', sender: 'bot' },
+            ]);
 
-            // Redirect to view the generated PDF
-            if (response.data.data.pdfURL) {
-                window.open(`http://localhost:5000${response.data.data.pdfURL}`, '_blank');
+            if (response.data?.data?.pdfURL) {
+                window.open(
+                    `http://localhost:5000${response.data.data.pdfURL}`,
+                    '_blank'
+                );
             }
 
-            // Navigate back to home after a delay
             setTimeout(() => navigate('/home'), 3000);
-        } catch (error) {
-            console.error('Submission error:', error);
-            setMessage(error.response?.data?.message || 'Submission failed. Please try again.');
+        } catch (err) {
+            setMessages(prev => [
+                ...prev,
+                {
+                    text:
+                        err.response?.data?.message ||
+                        'Submission failed. Please try again.',
+                    sender: 'bot',
+                },
+            ]);
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
+    /* =========================
+       NEXT QUESTION
+       ========================= */
+    const goToNextQuestion = () => {
+        const nextIndex = currentQuestionIndex + 1;
+        if (nextIndex < questions.length) {
+            setCurrentQuestionIndex(nextIndex);
+            setMessages(prev => [
+                ...prev,
+                { text: questions[nextIndex].text, sender: 'bot' },
+            ]);
+
+            if (questions[nextIndex].type === 'file') {
+                setTimeout(() => fileInputRef.current?.click(), 300);
+            }
+        } else {
+            submitInsuranceForm();
+        }
+    };
+
+    /* =========================
+       TEXT ANSWER SUBMIT
+       ========================= */
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const q = questions[currentQuestionIndex];
+
+        if (!q.optional && !inputValue.trim()) {
+            setError('This field is required');
+            return;
+        }
+
+        setError('');
+
+        setFormData(prev => ({
+            ...prev,
+            [q.field]: inputValue,
+        }));
+
+        setMessages(prev => [...prev, { text: inputValue, sender: 'user' }]);
+        setInputValue('');
+        goToNextQuestion();
+    };
+
+    /* =========================
+       FILE UPLOAD HANDLER
+       ========================= */
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setWeightmentSlip(file);
+
+        setMessages(prev => [
+            ...prev,
+            { text: `Uploaded: ${file.name}`, sender: 'user' },
+        ]);
+
+        // LAST STEP → SUBMIT
+        await submitInsuranceForm();
+    };
+
+    const currentQuestion = questions[currentQuestionIndex];
+    const isFileInput = currentQuestion.type === 'file';
+
     return (
-        <div className="min-h-screen bg-gray-100 p-4">
-            <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-                <h1 className="text-2xl font-bold mb-6">Insurance Form</h1>
+        <div className="flex flex-col h-screen bg-gray-100">
+            {/* Header */}
+            <div className="bg-blue-600 text-white p-4 shadow">
+                <h1 className="text-lg font-semibold">Insurance Assistant</h1>
+                <p className="text-xs opacity-80">Chat-based insurance form</p>
+            </div>
 
-                {message && (
-                    <div className={`mb-4 p-3 rounded ${message.includes('success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {message}
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((m, i) => (
+                    <div
+                        key={i}
+                        className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'
+                            }`}
+                    >
+                        <div
+                            className={`max-w-[75%] p-3 rounded-lg ${m.sender === 'user'
+                                    ? 'bg-blue-500 text-white rounded-br-none'
+                                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                                }`}
+                        >
+                            {m.text}
+                        </div>
                     </div>
-                )}
+                ))}
+                <div ref={messagesEndRef} />
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Supplier Name</label>
-                            <input
-                                type="text"
-                                name="supplierName"
-                                value={formData.supplierName}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Supplier Address</label>
-                            <input
-                                type="text"
-                                name="supplierAddress"
-                                value={formData.supplierAddress}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Place of Supply</label>
-                            <input
-                                type="text"
-                                name="placeOfSupply"
-                                value={formData.placeOfSupply}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Buyer Name</label>
-                            <input
-                                type="text"
-                                name="buyerName"
-                                value={formData.buyerName}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Buyer Address</label>
-                            <input
-                                type="text"
-                                name="buyerAddress"
-                                value={formData.buyerAddress}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Item Name</label>
-                            <input
-                                type="text"
-                                name="itemName"
-                                value={formData.itemName}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">HSN</label>
-                            <input
-                                type="text"
-                                name="hsn"
-                                value={formData.hsn}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Quantity</label>
-                            <input
-                                type="number"
-                                name="quantity"
-                                value={formData.quantity}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Rate</label>
-                            <input
-                                type="number"
-                                name="rate"
-                                value={formData.rate}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Vehicle Number</label>
-                            <input
-                                type="text"
-                                name="vehicleNumber"
-                                value={formData.vehicleNumber}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Notes</label>
-                        <textarea
-                            name="notes"
-                            value={formData.notes}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            rows="3"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Weightment Slip (Optional)</label>
+            {/* Input Area */}
+            <div className="border-t bg-white p-4">
+                {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+
+                {isFileInput ? (
+                    <div className="text-center">
                         <input
                             type="file"
-                            accept="image/*"
+                            ref={fileInputRef}
                             onChange={handleFileChange}
-                            className="w-full p-2 border rounded"
+                            accept="image/*"
+                            className="hidden"
                         />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="bg-blue-600 text-white px-4 py-2 rounded"
+                        >
+                            Upload Weightment Slip
+                        </button>
                     </div>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                        {loading ? 'Submitting...' : 'Submit Insurance Form'}
-                    </button>
-                </form>
+                ) : (
+                    <form onSubmit={handleSubmit} className="flex">
+                        <input
+                            type={currentQuestion.type}
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder={currentQuestion.text}
+                            className="flex-1 border rounded-l px-3 py-2"
+                            disabled={isSubmitting}
+                        />
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-blue-600 text-white px-4 rounded-r"
+                        >
+                            <ArrowUpIcon className="h-5 w-5" />
+                        </button>
+                    </form>
+                )}
+
+                {isSubmitting && (
+                    <p className="text-center text-sm text-gray-500 mt-2">
+                        Processing…
+                    </p>
+                )}
             </div>
         </div>
     );

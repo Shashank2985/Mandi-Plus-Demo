@@ -5,7 +5,7 @@ const Select = ({ options, placeholder, value, onChange, className = '', ...prop
         <select
             value={value}
             onChange={onChange}
-            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent ${className}`}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-4xl focus:outline-none focus:ring-2 focus:ring-[#4309ac] focus:border-transparent ${className}`}
             {...props}
         >
             <option value="">{placeholder}</option>

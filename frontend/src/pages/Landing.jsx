@@ -1,38 +1,44 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-gray-100 p-4">
-            {/* Main Card */}
-            <div className="bg-[#175f31] h-[calc(100vh-2rem)] rounded-4xl shadow-xl p-8 w-full max-w-sm text-center text-white relative mx-auto flex flex-col justify-center items-center">
-                {/* Logo/Text */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-2">Mandi Plus</h1>
-                    <p className="text-lg opacity-90">Your Mandi Connection</p>
+        <div className="min-h-screen bg-white flex items-center justify-center px-4 relative">
+            {/* Phone-style Card */}
+            <div className="w-full max-w-md h-[95vh] flex flex-col items-center justify-center relative overflow-hidden">
+
+                {/* Center Text Logo (Square) */}
+                <div className="w-[90%] max-w-sm aspect-square bg-white flex flex-col items-center justify-center text-center rounded-3xl">
+                    <h2 className="text-5xl font-bold tracking-tight"
+                        style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <span className="text-slate-800">Mandi</span>
+                        <span className="text-[#4309ac]">Plus</span>
+                    </h2>
+
+                    <p className="mt-3 text-base font-medium">
+                        <span className="text-black">Risk Humara, </span>
+                        <span className="text-[#4309ac]">Munafa Aapka</span>
+                    </p>
                 </div>
 
-                {/* Content */}
-                <div className="space-y-6">
-                    <p className="text-sm opacity-80">
-                        Connect with farmers, buyers, and transporters in your area
-                    </p>
-
-                    {/* Small circular icon at bottom */}
-                    <div className="flex justify-center">
-                        <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">M</span>
-                        </div>
-                    </div>
+                {/* Footer */}
+                <div className="absolute bottom-6 left-12 flex items-center gap-2 text-xs text-white">
+                    <img
+                        src="/images/india.png"
+                        alt="India"
+                        className="w-8 h-8 object-contain rounded-full"
+                    />
+                    <span className="text-[15px] text-[#4309ac]">Proudly Made in India</span>
                 </div>
             </div>
 
-            {/* Floating Arrow Button */}
+            {/* Floating CTA Button */}
             <button
-                onClick={() => navigate('/register')}
-                className="fixed bottom-4 right-4 w-12 h-12 bg-[#25D366] text-white rounded-full shadow-md hover:bg-[#20c157] transition-colors flex items-center justify-center"
+                onClick={() => navigate("/register")}
+                className="fixed bottom-6 right-6 w-10 h-10 rounded-full bg-[#4309ac] text-white shadow-xl flex items-center justify-center"
+                aria-label="Register"
             >
                 <svg
                     className="w-6 h-6"
@@ -44,7 +50,7 @@ const Landing = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 5l7 7-7 7"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
                     />
                 </svg>
             </button>
