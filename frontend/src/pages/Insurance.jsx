@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowUpIcon } from '@heroicons/react/24/outline';
+import { ArrowUpIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 
 const questions = [
     { field: 'supplierName', text: "What is the supplier's name?", type: 'text' },
@@ -50,34 +50,23 @@ const Insurance = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    /* =========================
-       CENTRAL SUBMIT FUNCTION
-       ========================= */
+    /* ========================= SUBMIT ========================= */
     const submitInsuranceForm = async () => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
         setMessages(prev => [
             ...prev,
-            { text: 'Submitting insurance form and generating PDF...', sender: 'bot' },
+            { text: 'Submitting insurance form and generating PDF…', sender: 'bot' },
         ]);
 
         try {
             const submitData = new FormData();
-
-            Object.keys(formData).forEach(key => {
-                submitData.append(key, formData[key]);
-            });
-
-            if (weightmentSlip) {
-                submitData.append('weightmentSlip', weightmentSlip);
-            }
+            Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
+            if (weightmentSlip) submitData.append('weightmentSlip', weightmentSlip);
 
             const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/');
-                return;
-            }
+            if (!token) return navigate('/');
 
             const response = await axios.post(
                 'http://localhost:5000/api/insurance/create',
@@ -92,14 +81,11 @@ const Insurance = () => {
 
             setMessages(prev => [
                 ...prev,
-                { text: 'Insurance form submitted successfully!', sender: 'bot' },
+                { text: 'Insurance form submitted successfully ✅', sender: 'bot' },
             ]);
 
             if (response.data?.data?.pdfURL) {
-                window.open(
-                    `http://localhost:5000${response.data.data.pdfURL}`,
-                    '_blank'
-                );
+                window.open(`http://localhost:5000${response.data.data.pdfURL}`, '_blank');
             }
 
             setTimeout(() => navigate('/home'), 3000);
@@ -107,9 +93,7 @@ const Insurance = () => {
             setMessages(prev => [
                 ...prev,
                 {
-                    text:
-                        err.response?.data?.message ||
-                        'Submission failed. Please try again.',
+                    text: err.response?.data?.message || 'Submission failed. Please try again.',
                     sender: 'bot',
                 },
             ]);
@@ -118,17 +102,12 @@ const Insurance = () => {
         }
     };
 
-    /* =========================
-       NEXT QUESTION
-       ========================= */
+    /* ========================= FLOW ========================= */
     const goToNextQuestion = () => {
         const nextIndex = currentQuestionIndex + 1;
         if (nextIndex < questions.length) {
             setCurrentQuestionIndex(nextIndex);
-            setMessages(prev => [
-                ...prev,
-                { text: questions[nextIndex].text, sender: 'bot' },
-            ]);
+            setMessages(prev => [...prev, { text: questions[nextIndex].text, sender: 'bot' }]);
 
             if (questions[nextIndex].type === 'file') {
                 setTimeout(() => fileInputRef.current?.click(), 300);
@@ -138,9 +117,6 @@ const Insurance = () => {
         }
     };
 
-    /* =========================
-       TEXT ANSWER SUBMIT
-       ========================= */
     const handleSubmit = (e) => {
         e.preventDefault();
         const q = questions[currentQuestionIndex];
@@ -151,32 +127,18 @@ const Insurance = () => {
         }
 
         setError('');
-
-        setFormData(prev => ({
-            ...prev,
-            [q.field]: inputValue,
-        }));
-
+        setFormData(prev => ({ ...prev, [q.field]: inputValue }));
         setMessages(prev => [...prev, { text: inputValue, sender: 'user' }]);
         setInputValue('');
         goToNextQuestion();
     };
 
-    /* =========================
-       FILE UPLOAD HANDLER
-       ========================= */
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         setWeightmentSlip(file);
-
-        setMessages(prev => [
-            ...prev,
-            { text: `Uploaded: ${file.name}`, sender: 'user' },
-        ]);
-
-        // LAST STEP → SUBMIT
+        setMessages(prev => [...prev, { text: `📎 ${file.name}`, sender: 'user' }]);
         await submitInsuranceForm();
     };
 
@@ -184,25 +146,24 @@ const Insurance = () => {
     const isFileInput = currentQuestion.type === 'file';
 
     return (
-        <div className="flex flex-col h-screen bg-gray-100">
-            {/* Header */}
-            <div className="bg-blue-600 text-white p-4 shadow">
-                <h1 className="text-lg font-semibold">Insurance Assistant</h1>
-                <p className="text-xs opacity-80">Chat-based insurance form</p>
+        <div className="flex flex-col h-screen bg-[#efeae2]">
+            {/* WhatsApp Header */}
+            <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3 shadow">
+                <div className="w-9 h-9 rounded-full bg-gray-300" />
+                <div>
+                    <p className="font-medium leading-none">Insurance Assistant</p>
+                    <p className="text-xs opacity-80">online</p>
+                </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Chat */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {messages.map((m, i) => (
-                    <div
-                        key={i}
-                        className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'
-                            }`}
-                    >
+                    <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div
-                            className={`max-w-[75%] p-3 rounded-lg ${m.sender === 'user'
-                                    ? 'bg-blue-500 text-white rounded-br-none'
-                                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                            className={`max-w-[75%] px-3 py-2 text-sm rounded-lg ${m.sender === 'user'
+                                    ? 'bg-[#dcf8c6] rounded-br-none'
+                                    : 'bg-white rounded-bl-none'
                                 }`}
                         >
                             {m.text}
@@ -212,50 +173,56 @@ const Insurance = () => {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="border-t bg-white p-4">
-                {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+            {/* Input Bar */}
+            <div className="bg-[#f0f0f0] px-3 py-2 border-t">
+                {error && <p className="text-red-500 text-xs mb-1">{error}</p>}
 
                 {isFileInput ? (
-                    <div className="text-center">
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept="image/*"
-                            className="hidden"
-                        />
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="bg-blue-600 text-white px-4 py-2 rounded"
-                        >
-                            Upload Weightment Slip
-                        </button>
+                    <div className="flex justify-center">
+                        {!weightmentSlip ? (
+                            <>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="bg-[#25D366] text-white px-4 py-2 rounded-full flex items-center gap-2"
+                                >
+                                    <PaperClipIcon className="w-4 h-4" />
+                                    Upload weightment slip
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                disabled
+                                className="bg-gray-400 text-white px-6 py-2 rounded-full"
+                            >
+                                Submitting…
+                            </button>
+                        )}
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="flex">
+                    <form onSubmit={handleSubmit} className="flex items-center gap-2">
                         <input
                             type={currentQuestion.type}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder={currentQuestion.text}
-                            className="flex-1 border rounded-l px-3 py-2"
+                            placeholder="Type a message"
+                            className="flex-1 rounded-full px-4 py-2 text-sm focus:outline-none"
                             disabled={isSubmitting}
                         />
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-blue-600 text-white px-4 rounded-r"
+                            className="bg-[#25D366] p-2 rounded-full text-white"
                         >
-                            <ArrowUpIcon className="h-5 w-5" />
+                            <ArrowUpIcon className="w-5 h-5" />
                         </button>
                     </form>
-                )}
-
-                {isSubmitting && (
-                    <p className="text-center text-sm text-gray-500 mt-2">
-                        Processing…
-                    </p>
                 )}
             </div>
         </div>
