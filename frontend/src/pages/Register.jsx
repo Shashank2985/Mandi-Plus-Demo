@@ -145,14 +145,24 @@ const Register = () => {
             />
           </div>
 
-          <Select
-            className="bg-gray-200/80"
-            name="category"
-            placeholder="Select User Category"
-            options={userCategories}
-            value={formData.category}
-            onChange={handleInputChange}
-          />
+          <div className="flex flex-col gap-2 justify-center px-6">
+            {userCategories.map((category) => (
+              <label
+                key={category.value}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="category"
+                  value={category.value}
+                  checked={formData.category === category.value}
+                  onChange={handleInputChange}
+                  className="accent-[#4309ac]"
+                />
+                <span>{category.label}</span>
+              </label>
+            ))}
+          </div>
 
           <Select
             className="bg-gray-200/80"

@@ -4,18 +4,112 @@ import axios from 'axios';
 import { ArrowUpIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 
 const questions = [
-    { field: 'supplierName', text: "What is the supplier's name?", type: 'text' },
-    { field: 'supplierAddress', text: "What is the supplier's address?", type: 'text' },
-    { field: 'placeOfSupply', text: 'What is the place of supply?', type: 'text' },
-    { field: 'buyerName', text: "What is the buyer's name?", type: 'text' },
-    { field: 'buyerAddress', text: "What is the buyer's address?", type: 'text' },
-    { field: 'itemName', text: 'What is the item name?', type: 'text' },
-    { field: 'hsn', text: 'What is the HSN code?', type: 'text' },
-    { field: 'quantity', text: 'What is the quantity?', type: 'number' },
-    { field: 'rate', text: 'What is the rate?', type: 'number' },
-    { field: 'vehicleNumber', text: 'What is the vehicle number?', type: 'text' },
-    { field: 'notes', text: 'Any additional notes? (Optional)', type: 'text', optional: true },
-    { field: 'weightmentSlip', text: 'Please upload the weightment slip (Optional)', type: 'file', optional: true },
+    {
+        field: 'language',
+        type: 'language',
+        text: {
+            en: "Hi, Select language / भाषा चुने\nType 1 - English\nType 2 - हिंदी",
+            hi: "Hi, Select language / भाषा चुने\nType 1 - English\nType 2 - हिंदी"
+        }
+    },
+    {
+        field: 'supplierName',
+        type: 'text',
+        text: {
+            en: "What is the supplier's name?",
+            hi: "सप्लायर का नाम क्या है?"
+        }
+    },
+    {
+        field: 'supplierAddress',
+        type: 'text',
+        text: {
+            en: "What is the supplier's address?",
+            hi: "सप्लायर का पता क्या है?"
+        }
+    },
+    {
+        field: 'placeOfSupply',
+        type: 'text',
+        text: {
+            en: 'What is the place of supply?',
+            hi: 'सप्लाय का स्थान क्या है?'
+        }
+    },
+    {
+        field: 'buyerName',
+        type: 'text',
+        text: {
+            en: "What is the buyer's name?",
+            hi: "खरीदार का नाम क्या है?"
+        }
+    },
+    {
+        field: 'buyerAddress',
+        type: 'text',
+        text: {
+            en: "What is the buyer's address?",
+            hi: "खरीदार का पता क्या है?"
+        }
+    },
+    {
+        field: 'itemName',
+        type: 'text',
+        text: {
+            en: 'What is the item name?',
+            hi: 'वस्तु का नाम क्या है?'
+        }
+    },
+    {
+        field: 'hsn',
+        type: 'text',
+        text: {
+            en: 'What is the HSN code?',
+            hi: 'HSN कोड क्या है?'
+        }
+    },
+    {
+        field: 'quantity',
+        type: 'number',
+        text: {
+            en: 'What is the quantity?',
+            hi: 'मात्रा क्या है?'
+        }
+    },
+    {
+        field: 'rate',
+        type: 'number',
+        text: {
+            en: 'What is the rate?',
+            hi: 'भाव क्या है?'
+        }
+    },
+    {
+        field: 'vehicleNumber',
+        type: 'text',
+        text: {
+            en: 'What is the vehicle number?',
+            hi: 'गाड़ी नंबर क्या है?'
+        }
+    },
+    {
+        field: 'notes',
+        type: 'text',
+        optional: true,
+        text: {
+            en: 'Any additional notes? (Optional)',
+            hi: 'कोई अतिरिक्त नोट? (वैकल्पिक)'
+        }
+    },
+    {
+        field: 'weightmentSlip',
+        type: 'file',
+        optional: true,
+        text: {
+            en: 'Please upload the weightment slip (Optional)',
+            hi: 'कृपया वजन पर्ची अपलोड करें (वैकल्पिक)'
+        }
+    },
 ];
 
 const Insurance = () => {
@@ -40,8 +134,9 @@ const Insurance = () => {
     const [weightmentSlip, setWeightmentSlip] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [inputValue, setInputValue] = useState('');
+    const [language, setLanguage] = useState(null);
     const [messages, setMessages] = useState([
-        { text: `Welcome! ${questions[0].text}`, sender: 'bot' },
+        { text: questions[0].text.en, sender: 'bot' },
     ]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -103,13 +198,21 @@ const Insurance = () => {
     };
 
     /* ========================= FLOW ========================= */
+    const getQuestionText = (question) => {
+        return language ? question.text[language] : question.text.en;
+    };
+
     const goToNextQuestion = () => {
         const nextIndex = currentQuestionIndex + 1;
         if (nextIndex < questions.length) {
             setCurrentQuestionIndex(nextIndex);
-            setMessages(prev => [...prev, { text: questions[nextIndex].text, sender: 'bot' }]);
+            const nextQuestion = questions[nextIndex];
+            setMessages(prev => [...prev, {
+                text: getQuestionText(nextQuestion),
+                sender: 'bot'
+            }]);
 
-            if (questions[nextIndex].type === 'file') {
+            if (nextQuestion.type === 'file') {
                 setTimeout(() => fileInputRef.current?.click(), 300);
             }
         } else {
@@ -120,15 +223,41 @@ const Insurance = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const q = questions[currentQuestionIndex];
+        const currentInput = inputValue.trim();
 
-        if (!q.optional && !inputValue.trim()) {
-            setError('This field is required');
+        // Handle language selection
+        if (q.field === 'language') {
+            if (currentInput === '1' || currentInput === '2') {
+                const selectedLanguage = currentInput === '1' ? 'en' : 'hi';
+                const languageName = selectedLanguage === 'en' ? 'English' : 'हिंदी';
+
+                // Update the language and messages in a single state update
+                setLanguage(selectedLanguage);
+                setMessages(prev => [
+                    ...prev,
+                    { text: languageName, sender: 'user' },
+                    {
+                        text: questions[1].text[selectedLanguage],
+                        sender: 'bot'
+                    }
+                ]);
+                setInputValue('');
+                setCurrentQuestionIndex(1);
+                return;
+            } else {
+                setError('Please type 1 or 2 / कृपया 1 या 2 टाइप करें');
+                return;
+            }
+        }
+
+        if (!q.optional && !currentInput) {
+            setError(language === 'hi' ? 'यह फ़ील्ड आवश्यक है' : 'This field is required');
             return;
         }
 
         setError('');
-        setFormData(prev => ({ ...prev, [q.field]: inputValue }));
-        setMessages(prev => [...prev, { text: inputValue, sender: 'user' }]);
+        setFormData(prev => ({ ...prev, [q.field]: currentInput }));
+        setMessages(prev => [...prev, { text: currentInput, sender: 'user' }]);
         setInputValue('');
         goToNextQuestion();
     };
@@ -139,6 +268,18 @@ const Insurance = () => {
 
         setWeightmentSlip(file);
         setMessages(prev => [...prev, { text: `📎 ${file.name}`, sender: 'user' }]);
+
+        // Show submitting message in selected language
+        setMessages(prev => [
+            ...prev,
+            {
+                text: language === 'hi'
+                    ? 'सबमिट किया जा रहा है...'
+                    : 'Submitting...',
+                sender: 'bot'
+            }
+        ]);
+
         await submitInsuranceForm();
     };
 
@@ -148,12 +289,19 @@ const Insurance = () => {
     return (
         <div className="flex flex-col h-screen bg-[#efeae2]">
             {/* WhatsApp Header */}
-            <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3 shadow">
-                <div className="w-9 h-9 rounded-full bg-gray-300" />
-                <div>
-                    <p className="font-medium leading-none">Insurance Assistant</p>
-                    <p className="text-xs opacity-80">online</p>
+            <div className="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between shadow">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gray-300" />
+                    <div>
+                        <p className="font-medium leading-none">Mandi Plus</p>
+                        <p className="text-xs opacity-80">online</p>
+                    </div>
                 </div>
+                <a href="tel:" className="p-2 rounded-full hover:bg-[#128C7E] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                </a>
             </div>
 
             {/* Chat */}
@@ -162,8 +310,8 @@ const Insurance = () => {
                     <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div
                             className={`max-w-[75%] px-3 py-2 text-sm rounded-lg ${m.sender === 'user'
-                                    ? 'bg-[#dcf8c6] rounded-br-none'
-                                    : 'bg-white rounded-bl-none'
+                                ? 'bg-[#dcf8c6] rounded-br-none'
+                                : 'bg-white rounded-bl-none'
                                 }`}
                         >
                             {m.text}
@@ -193,15 +341,15 @@ const Insurance = () => {
                                     className="bg-[#25D366] text-white px-4 py-2 rounded-full flex items-center gap-2"
                                 >
                                     <PaperClipIcon className="w-4 h-4" />
-                                    Upload weightment slip
+                                    {language === 'hi' ? 'वजन पर्ची अपलोड करें' : 'Upload weightment slip'}
                                 </button>
                             </>
                         ) : (
                             <button
+                                className="bg-[#25D366] text-white px-4 py-2 rounded-full flex items-center gap-2 opacity-50 cursor-not-allowed"
                                 disabled
-                                className="bg-gray-400 text-white px-6 py-2 rounded-full"
                             >
-                                Submitting…
+                                {language === 'hi' ? 'सबमिट हो रहा है...' : 'Submitting...'}
                             </button>
                         )}
                     </div>
@@ -211,7 +359,9 @@ const Insurance = () => {
                             type={currentQuestion.type}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Type a message"
+                            placeholder={currentQuestion.type === 'number'
+                                ? (language === 'hi' ? 'संख्या दर्ज करें...' : 'Enter a number...')
+                                : (language === 'hi' ? 'अपना उत्तर टाइप करें...' : 'Type your answer...')}
                             className="flex-1 rounded-full px-4 py-2 text-sm focus:outline-none"
                             disabled={isSubmitting}
                         />
@@ -220,7 +370,7 @@ const Insurance = () => {
                             disabled={isSubmitting}
                             className="bg-[#25D366] p-2 rounded-full text-white"
                         >
-                            <ArrowUpIcon className="w-5 h-5" />
+                            <ArrowUpIcon className="h-5 w-5 text-white" />
                         </button>
                     </form>
                 )}
