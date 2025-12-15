@@ -123,8 +123,8 @@ const Insurance = () => {
         placeOfSupply: '',
         buyerName: '',
         buyerAddress: '',
-        itemName: '',
-        hsn: '',
+        itemName: 'Coconut',
+        hsn: '08011910',
         quantity: '',
         rate: '',
         vehicleNumber: '',
@@ -203,7 +203,23 @@ const Insurance = () => {
     };
 
     const goToNextQuestion = () => {
-        const nextIndex = currentQuestionIndex + 1;
+        const currentQuestion = questions[currentQuestionIndex];
+
+        // Skip itemName and hsn questions as they have default values
+        let nextIndex = currentQuestionIndex + 1;
+        if (currentQuestion.field === 'buyerAddress') {
+            // After buyerAddress, skip to quantity
+            nextIndex = questions.findIndex(q => q.field === 'quantity');
+
+            // Add auto-filled values to messages
+            setMessages(prev => [
+                ...prev,
+                { text: 'Coconut', sender: 'user' },
+                { text: getQuestionText(questions[questions.findIndex(q => q.field === 'hsn')]), sender: 'bot' },
+                { text: '08011910', sender: 'user' }
+            ]);
+        }
+
         if (nextIndex < questions.length) {
             setCurrentQuestionIndex(nextIndex);
             const nextQuestion = questions[nextIndex];
