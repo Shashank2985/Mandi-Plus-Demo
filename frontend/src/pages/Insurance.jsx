@@ -89,7 +89,7 @@ const questions = [
         type: 'text',
         text: {
             en: "What is the vehicle number?",
-            hi: "गाड़ी नंबर क्या है?"
+            hi: "गाड़ी नंबर क्या है?"
         }
     },
     {
@@ -146,7 +146,8 @@ const Insurance = () => {
     }, [messages]);
 
     /* ========================= SUBMIT ========================= */
-    const submitInsuranceForm = async () => {
+    // FIX 1: Accept 'fileArgument' directly so we don't depend on stale state
+    const submitInsuranceForm = async (fileArgument = null) => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
@@ -157,8 +158,15 @@ const Insurance = () => {
 
         try {
             const submitData = new FormData();
+
+            // Append text fields
             Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
-            if (weightmentSlip) submitData.append('weightmentSlip', weightmentSlip);
+
+            // FIX 2: Use the passed file argument OR the state (fallback)
+            const finalFile = fileArgument || weightmentSlip;
+            if (finalFile) {
+                submitData.append('weightmentSlip', finalFile);
+            }
 
             const token = localStorage.getItem('token');
             if (!token) return navigate('/');
@@ -169,7 +177,7 @@ const Insurance = () => {
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data',
+                        // Content-Type is handled automatically by axios for FormData
                     },
                 }
             );
@@ -247,7 +255,6 @@ const Insurance = () => {
                 const selectedLanguage = currentInput === '1' ? 'en' : 'hi';
                 const languageName = selectedLanguage === 'en' ? 'English' : 'हिंदी';
 
-                // Update the language and messages in a single state update
                 setLanguage(selectedLanguage);
                 setMessages(prev => [
                     ...prev,
@@ -282,10 +289,11 @@ const Insurance = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Update state (for UI display if needed later)
         setWeightmentSlip(file);
+
         setMessages(prev => [...prev, { text: `📎 ${file.name}`, sender: 'user' }]);
 
-        // Show submitting message in selected language
         setMessages(prev => [
             ...prev,
             {
@@ -296,7 +304,9 @@ const Insurance = () => {
             }
         ]);
 
-        await submitInsuranceForm();
+        // FIX 3: Pass 'file' directly here!
+        // Because 'setWeightmentSlip' is async, state won't be ready yet.
+        await submitInsuranceForm(file);
     };
 
     const currentQuestion = questions[currentQuestionIndex];
