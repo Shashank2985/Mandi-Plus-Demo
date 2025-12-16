@@ -8,88 +8,88 @@ const questions = [
         field: 'language',
         type: 'language',
         text: {
-            en: "Hi, Select language / भाषा चुने\nType 1 - English\nType 2 - हिंदी",
-            hi: "Hi, Select language / भाषा चुने\nType 1 - English\nType 2 - हिंदी"
+            en: "Namaste! Select your language / नमस्ते! अपनी भाषा चुनें\nType 1 - English\nType 2 - हिंदी",
+            hi: "Namaste! Select your language / नमस्ते! अपनी भाषा चुनें\nType 1 - English\nType 2 - हिंदी"
         }
     },
     {
         field: 'supplierName',
         type: 'text',
         text: {
-            en: "What is the supplier's name?",
-            hi: "सप्लायर का नाम क्या है?"
+            en: "Who is sending the goods? (Supplier Name)",
+            hi: "माल भेजने वाली पार्टी का नाम क्या है?"
         }
     },
     {
         field: 'supplierAddress',
         type: 'text',
         text: {
-            en: "What is the supplier's address?",
-            hi: "सप्लायर का पता क्या है?"
+            en: "Where are they from? (Supplier Address)",
+            hi: "सप्लायर का एड्रेस कहाँ का है?"
         }
     },
     {
         field: 'placeOfSupply',
         type: 'text',
         text: {
-            en: 'What is the place of supply?',
-            hi: 'सप्लाय का स्थान क्या है?'
+            en: "Where does the delivery go? (Place of Supply)",
+            hi: "माल कहाँ पहुँचाना है?"
         }
     },
     {
         field: 'buyerName',
         type: 'text',
         text: {
-            en: "What is the buyer's name?",
-            hi: "खरीदार का नाम क्या है?"
+            en: "Who is buying? (Buyer Party Name)",
+            hi: "माल खरीदने वाली पार्टी का नाम क्या है?"
         }
     },
     {
         field: 'buyerAddress',
         type: 'text',
         text: {
-            en: "What is the buyer's address?",
-            hi: "खरीदार का पता क्या है?"
+            en: "What is the Buyer's address?",
+            hi: "खरीदने वाली पार्टी का एड्रेस बताइये।"
         }
     },
     {
         field: 'itemName',
         type: 'text',
         text: {
-            en: 'What is the item name?',
-            hi: 'वस्तु का नाम क्या है?'
+            en: "What is the item? (e.g., Rice, Wheat)",
+            hi: "माल में क्या आइटम है? (जैसे - चावल, गेहूं)"
         }
     },
     {
         field: 'hsn',
         type: 'text',
         text: {
-            en: 'What is the HSN code?',
-            hi: 'HSN कोड क्या है?'
+            en: "Do you know the HSN code?",
+            hi: "अगर HSN कोड पता है तो बता दीजिये।"
         }
     },
     {
         field: 'quantity',
         type: 'number',
         text: {
-            en: 'What is the quantity?',
-            hi: 'मात्रा क्या है?'
+            en: "How much quantity/weight?",
+            hi: "कितना माल है?"
         }
     },
     {
         field: 'rate',
         type: 'number',
         text: {
-            en: 'What is the rate?',
-            hi: 'भाव क्या है?'
+            en: "What is the rate/price?",
+            hi: "क्या भाव लगा है?"
         }
     },
     {
         field: 'vehicleNumber',
         type: 'text',
         text: {
-            en: 'What is the vehicle number?',
-            hi: 'गाड़ी नंबर क्या है?'
+            en: "What is the vehicle number?",
+            hi: "गाड़ी नंबर क्या है?"
         }
     },
     {
@@ -97,8 +97,8 @@ const questions = [
         type: 'text',
         optional: true,
         text: {
-            en: 'Any additional notes? (Optional)',
-            hi: 'कोई अतिरिक्त नोट? (वैकल्पिक)'
+            en: "Any other details? (Optional)",
+            hi: "कोई और खास बात या नोट? (वैकल्पिक)"
         }
     },
     {
@@ -106,8 +106,8 @@ const questions = [
         type: 'file',
         optional: true,
         text: {
-            en: 'Please upload the weightment slip (Optional)',
-            hi: 'कृपया वजन पर्ची अपलोड करें (वैकल्पिक)'
+            en: "Upload the Weightment Slip (Kanta Parchi)",
+            hi: "कांटा पर्ची की फोटो भेजें (वैकल्पिक)"
         }
     },
 ];
@@ -307,6 +307,14 @@ const Insurance = () => {
             {/* WhatsApp Header */}
             <div className="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between shadow">
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/home')}
+                        className="p-1 -ml-2 rounded-full hover:bg-[#128C7E] transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                        </svg>
+                    </button>
                     <div className="w-9 h-9 rounded-full bg-gray-300" />
                     <div>
                         <p className="font-medium leading-none">Mandi Plus</p>
