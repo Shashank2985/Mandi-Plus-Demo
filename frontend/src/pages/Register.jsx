@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import Select from "../components/Select";
-import { registerUser } from "../api/auth";
+import { sendOtp, verifyOtpAndRegister } from "../api/auth";
+import { toast } from "react-toastify";
 
 const indianStates = [
   { value: "Andhra Pradesh", label: "Andhra Pradesh" },
@@ -46,7 +47,9 @@ const Register = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
   const [error, setError] = useState("");
+  const [otpResendTime, setOtpResendTime] = useState(0);
 
   const navigate = useNavigate();
 
@@ -55,13 +58,39 @@ const Register = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSendOtp = () => {
+  // Handle OTP resend countdown
+  useEffect(() => {
+    let timer;
+    if (otpResendTime > 0) {
+      timer = setTimeout(() => setOtpResendTime(otpResendTime - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [otpResendTime]);
+
+  const handleSendOtp = async () => {
     if (!formData.mobileNumber) {
       setError("Please enter phone number");
       return;
     }
-    setOtpSent(true);
+
+    if (formData.mobileNumber.length !== 10) {
+      setError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    setSendingOtp(true);
     setError("");
+
+    try {
+      await sendOtp(formData.mobileNumber);
+      setOtpSent(true);
+      setOtpResendTime(30); // 30 seconds cooldown
+      toast.success("OTP sent successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setSendingOtp(false);
+    }
   };
 
   const handleOtpDigitChange = (value, index) => {
@@ -73,8 +102,11 @@ const Register = () => {
 
     const otpValue = newOtpDigits.join("");
     setFormData({ ...formData, otp: otpValue });
-    setOtpVerified(otpValue === "000000");
 
+    // Enable verify button when all 6 digits are entered
+    setOtpVerified(otpValue.length === 6);
+
+    // Auto-focus next input
     if (value && index < 5) {
       document.getElementById(`otp-${index + 1}`)?.focus();
     }
@@ -86,29 +118,50 @@ const Register = () => {
     }
   };
 
-  const handleRegister = async () => {
+  const handleVerifyOtp = async () => {
     if (!otpVerified) {
-      setError("Please verify OTP first");
+      setError("Please enter a valid 6-digit OTP");
       return;
     }
+
     if (!formData.category || !formData.state) {
       setError("Please fill all fields");
       return;
     }
+
     setLoading(true);
     setError("");
+
     try {
-      const response = await registerUser({
-        mobileNumber: "+91" + formData.mobileNumber,
+      const response = await verifyOtpAndRegister({
+        mobileNumber: formData.mobileNumber,
+        otp: formData.otp,
         category: formData.category,
         state: formData.state,
       });
-      localStorage.setItem("token", response.token);
+
+      toast.success("Registration successful!");
       navigate("/home");
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(err.message || "Verification failed. Please try again.");
+      // Clear OTP fields on error
+      setOtpDigits(Array(6).fill(""));
+      setFormData({ ...formData, otp: "" });
+      document.getElementById('otp-0')?.focus();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (otpResendTime > 0) return;
+
+    try {
+      await sendOtp(formData.mobileNumber);
+      setOtpResendTime(30); // Reset cooldown
+      toast.success("OTP resent successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to resend OTP. Please try again.");
     }
   };
 
@@ -173,13 +226,18 @@ const Register = () => {
             onChange={handleInputChange}
           />
 
-          {!otpSent && (
+          {!otpSent ? (
             <button
               onClick={handleSendOtp}
-              className="w-full bg-[#4309ac] py-2 text-white rounded-4xl"
+              disabled={sendingOtp}
+              className={`w-full py-2 text-white rounded-4xl ${sendingOtp ? 'bg-gray-400' : 'bg-[#4309ac]'}`}
             >
-              Send OTP
+              {sendingOtp ? 'Sending OTP...' : 'Send OTP'}
             </button>
+          ) : (
+            <div className="text-center text-sm text-gray-500">
+              OTP has been sent to {formData.mobileNumber}
+            </div>
           )}
         </div>
 
@@ -227,17 +285,29 @@ const Register = () => {
             </div>
 
             <p className="text-sm text-gray-500 mb-6 text-center">
-              Didn't receive OTP?{" "}
-              <span className="text-[#4309ac]">Send again</span>
+              {otpResendTime > 0 ? (
+                `Resend OTP in ${otpResendTime}s`
+              ) : (
+                <>
+                  Didn't receive OTP?{" "}
+                  <button
+                    onClick={handleResendOtp}
+                    disabled={otpResendTime > 0}
+                    className="text-[#4309ac] disabled:text-gray-400"
+                  >
+                    Send again
+                  </button>
+                </>
+              )}
             </p>
 
             <div className="mt-6">
               <Button
-                onClick={handleRegister}
+                onClick={handleVerifyOtp}
                 disabled={!otpVerified || loading}
-                className="w-full bg-[#4309ac] py-3 rounded-xl"
+                className={`w-full py-3 rounded-xl ${!otpVerified || loading ? 'bg-gray-400' : 'bg-[#4309ac]'}`}
               >
-                {loading ? "Registering..." : "Verify and Continue"}
+                {loading ? "Verifying..." : "Verify and Continue"}
               </Button>
             </div>
           </div>

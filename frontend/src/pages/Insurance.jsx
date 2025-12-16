@@ -123,7 +123,7 @@ const Insurance = () => {
         placeOfSupply: '',
         buyerName: '',
         buyerAddress: '',
-        itemName: 'Coconut',
+        itemName: 'Tender Coconut',
         hsn: '08011910',
         quantity: '',
         rate: '',
@@ -214,7 +214,7 @@ const Insurance = () => {
             // Add auto-filled values to messages
             setMessages(prev => [
                 ...prev,
-                { text: 'Coconut', sender: 'user' },
+                { text: 'Tender Coconut', sender: 'user' },
                 { text: getQuestionText(questions[questions.findIndex(q => q.field === 'hsn')]), sender: 'bot' },
                 { text: '08011910', sender: 'user' }
             ]);
@@ -321,7 +321,15 @@ const Insurance = () => {
             </div>
 
             {/* Chat */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <div className="flex-1 bg-white overflow-y-auto px-4 py-3 space-y-3"
+                style={{
+                    backgroundImage: "url('/images/whatsapp-bg.png')",
+                    backgroundRepeat: 'repeat',
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.6,
+                }}
+            >
                 {messages.map((m, i) => (
                     <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div
