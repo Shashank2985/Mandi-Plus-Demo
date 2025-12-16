@@ -39,8 +39,8 @@ const AdminRoutes = () => {
                 ]);
 
                 setDashboardData({
-                    usersCount: usersResponse.data?.length || 0,
-                    formsCount: formsResponse.data?.length || 0,
+                    usersCount: usersResponse?.data?.length || 0,
+                    formsCount: formsResponse?.data?.length || 0,
                     loading: false,
                     error: null
                 });
