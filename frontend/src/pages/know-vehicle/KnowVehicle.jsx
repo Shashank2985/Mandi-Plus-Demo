@@ -19,7 +19,6 @@ const KnowVehicle = () => {
 
     const messagesEndRef = useRef(null);
 
-    // Auto-scroll
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -41,23 +40,26 @@ const KnowVehicle = () => {
         setTimeout(() => {
             const botResponses = [
                 {
-                    text: `Challan Status – No Challan  
-चालान स्थिति – कोई चालान नहीं  
+                    text: `Permit – Active  
+परमिट – एक्टिव  
 
-Vehicle Condition – Good  
-वाहन की स्थिति – अच्छी  
+Driver License – Available  
+ड्राइवर लाइसेंस – उपलब्ध  
 
-Driver Behaviour – Good  
-चालक का व्यवहार – अच्छा  
+Vehicle Condition – OK  
+गाड़ी की स्थिति – ठीक  
 
-Kilometers Travelled – 10000 KM  
-कुल दूरी – 10000 किलोमीटर  
+Challan – No Challan Found  
+चालान – कोई चालान नहीं  
 
-Vehicle Insurance – Active  
-वाहन बीमा – सक्रिय  
+EMI – Paid On Time  
+ईएमआई – समय पर भुगतान  
 
-Vehicle Rating – ⭐⭐⭐⭐  
-वाहन रेटिंग – ⭐⭐⭐⭐`,
+Vehicle Fitness – Fit  
+गाड़ी फिटनेस – फिट  
+
+✅ You can take **MandiPlus Verified Vehicle**  
+✅ आप **MandiPlus सत्यापित वाहन** ले सकते हैं`,
                     sender: 'bot',
                     timestamp: new Date()
                 },
@@ -117,7 +119,7 @@ Kya aap apna vehicle dekhna chahte hain?`,
                 </div>
             </div>
 
-            {/* CHAT AREA (BACKGROUND UNCHANGED) */}
+            {/* CHAT AREA */}
             <div
                 className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
                 style={{
@@ -175,7 +177,7 @@ Kya aap apna vehicle dekhna chahte hain?`,
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT AREA */}
+            {/* INPUT */}
             <div className="bg-[#F0F0F0] px-3 py-2 border-t">
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                     <input
