@@ -22,7 +22,7 @@ const Home = () => {
         <div className="min-h-screen bg-[#e0d7fc] pb-28">
 
             {/* HEADER */}
-            <div className="bg-purple-800 text-black px-5 py-4 rounded-b-4xl">
+            <div className="bg-white text-black px-5 py-4 rounded-b-4xl">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col items-center bg-white px-2 py-1 rounded-2xl -ml-2">
                         <h2 className="text-2xl font-bold tracking-tight -ml-10"
@@ -145,4 +145,3 @@ const Home = () => {
 };
 
 export default Home;
-z

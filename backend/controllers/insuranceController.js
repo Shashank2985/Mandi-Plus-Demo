@@ -22,7 +22,7 @@ const generatePDF = async (data) => {
     const templatePath = path.join(__dirname, '../templates/invoice.html');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = handlebars.compile(templateContent);
-    
+
     // Prepare data for template
     const templateData = {
         ...data,
@@ -34,16 +34,16 @@ const generatePDF = async (data) => {
     };
 
     const html = template(templateData);
-    
+
     const browser = await puppeteer.launch({
         headless: 'new',
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    
+
     try {
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        
+
         // Ensure all images are loaded
         await page.evaluate(async () => {
             const selectors = Array.from(document.querySelectorAll('img'));
