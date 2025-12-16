@@ -56,7 +56,8 @@ const Home = () => {
                 <div className="grid grid-cols-2 gap-4">
 
                     {/* Track Deliveries */}
-                    <div className="bg-white rounded-3xl p-4 shadow-sm">
+                    <div className="bg-white rounded-3xl p-4 shadow-sm"
+                        onClick={() => navigate('/tracking')}>
                         <h4 className="font-semibold mb-1">Track Deliveries</h4>
                         <p className="text-xs text-gray-500">
                             Real-time updates
