@@ -22,9 +22,9 @@ const Home = () => {
         <div className="min-h-screen bg-[#e0d7fc] pb-28">
 
             {/* HEADER */}
-            <div className="bg-purple-800 text-black px-5 py-4 rounded-b-4xl">
+            <div className="bg-white text-black px-5 py-4 rounded-b-4xl">
                 <div className="flex items-center justify-between">
-                    <div className="flex flex-col items-center bg-white px-2 py-1 rounded-2xl -ml-2">
+                    <div className="flex flex-col items-center">
                         <h2 className="text-2xl font-bold tracking-tight -ml-10"
                             style={{ fontFamily: 'Poppins, sans-serif' }}>
                             <span className="text-slate-800">Mandi</span>
@@ -38,7 +38,7 @@ const Home = () => {
 
                     <button
                         onClick={handleLogout}
-                        className="bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-30 text-purple-900 px-2 py-1 rounded-2xl text-sm font-medium flex items-center space-x-1 transition-all duration-300 border border-white border-opacity-20"
+                        className="bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-30 text-purple-900 px-4 py-2 rounded-2xl text-sm font-medium flex items-center space-x-2 transition-all duration-300 border border-white border-opacity-20"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -48,7 +48,7 @@ const Home = () => {
                 </div>
             </div>
 
-            <div className="px-5 mt-5">
+            <div className="px-5 mt-8">
                 <h2 className="text-xl font-semibold mb-4">
                     Our Services
                 </h2>
@@ -56,7 +56,10 @@ const Home = () => {
                 <div className="grid grid-cols-2 gap-4">
 
                     {/* Track Deliveries */}
-                    <div className="bg-white rounded-3xl p-4 shadow-sm">
+                    <div
+                        onClick={() => navigate('/tracking')}
+                        className="bg-white rounded-3xl p-4 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
                         <h4 className="font-semibold mb-1">Track Deliveries</h4>
                         <p className="text-xs text-gray-500">
                             Real-time updates

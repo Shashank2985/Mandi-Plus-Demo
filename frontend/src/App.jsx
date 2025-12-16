@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import Insurance from './pages/Insurance';
 import MyInsuranceForms from './pages/MyInsuranceForms';
+import Tracking from './pages/tracking/Tracking';
 import AdminRoutes from './routes/adminRoutes';
 import './App.css';
 
@@ -43,6 +44,12 @@ function App() {
         <Route path="/my-insurance-forms" element={
           <ProtectedRoute>
             <MyInsuranceForms />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tracking" element={
+          <ProtectedRoute>
+            <Tracking />
           </ProtectedRoute>
         } />
 
