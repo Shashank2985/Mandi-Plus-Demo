@@ -78,11 +78,14 @@ const Home = () => {
                         </span>
                     </div>
 
-                    {/* Generate Invoices */}
-                    <div className="bg-white rounded-3xl p-4 shadow-sm">
-                        <h4 className="font-semibold mb-1">Generate Invoice</h4>
+                    {/* Know Your Vehicle */}
+                    <div
+                        className="bg-white rounded-3xl p-4 shadow-sm cursor-pointer"
+                        onClick={() => navigate('/know-your-vehicle')}
+                    >
+                        <h4 className="font-semibold mb-1">Know Your Vehicle</h4>
                         <p className="text-xs text-gray-500">
-                            Easy billing
+                            Check vehicle details
                         </p>
                     </div>
 

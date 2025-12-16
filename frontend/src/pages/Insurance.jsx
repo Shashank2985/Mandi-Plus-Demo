@@ -191,7 +191,7 @@ const Insurance = () => {
                 window.open(`http://localhost:5000${response.data.data.pdfURL}`, '_blank');
             }
 
-            setTimeout(() => navigate('/home'), 3000);
+            setTimeout(() => navigate('/home'), 1000);
         } catch (err) {
             setMessages(prev => [
                 ...prev,
