@@ -8,8 +8,12 @@ const {
     getUserInsuranceForms
 } = require('../controllers/adminController');
 
+// ⚠️ ISSUE #8: Missing input validation
+// No validation for email format, password requirements
+// ⚠️ ISSUE #9: No rate limiting
+// Admin login endpoint vulnerable to brute force attacks
 // Public routes
-router.post('/login', loginAdmin);
+router.post('/login', loginAdmin);  // ❌ No rate limiting, no input validation
 
 // Protected routes (require admin authentication)
 router.use(adminAuth);
