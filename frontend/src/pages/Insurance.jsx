@@ -71,6 +71,7 @@ const questions = [
     {
         field: 'quantity',
         type: 'number',
+        step: "0.01",
         text: {
             en: "How much quantity/weight?",
             hi: "कितना माल है?"
@@ -79,6 +80,7 @@ const questions = [
     {
         field: 'rate',
         type: 'number',
+        step: "0.01",
         text: {
             en: "What is the rate/price?",
             hi: "क्या भाव लगा है?"
@@ -279,7 +281,12 @@ const Insurance = () => {
         }
 
         setError('');
-        setFormData(prev => ({ ...prev, [q.field]: currentInput }));
+        // Convert to number if it's a number field and not empty
+        const valueToStore = (q.type === 'number' && currentInput)
+            ? parseFloat(currentInput)
+            : currentInput;
+
+        setFormData(prev => ({ ...prev, [q.field]: valueToStore }));
         setMessages(prev => [...prev, { text: currentInput, sender: 'user' }]);
         setInputValue('');
         goToNextQuestion();
@@ -406,6 +413,7 @@ const Insurance = () => {
                                 : (language === 'hi' ? 'अपना उत्तर टाइप करें...' : 'Type your answer...')}
                             className="flex-1 rounded-full px-4 py-2 text-sm focus:outline-none"
                             disabled={isSubmitting}
+                            step={currentQuestion.step || (currentQuestion.type === 'number' ? '0.01' : undefined)}
                         />
                         <button
                             type="submit"
