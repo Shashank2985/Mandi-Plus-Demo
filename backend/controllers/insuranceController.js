@@ -71,66 +71,75 @@ const generatePDF = async (data) => {
     }
 };
 
-// @desc    Create insurance form with PDF generation
-// @route   POST /api/insurance/create
-// @access  Private
 const createInsuranceForm = async (req, res) => {
     try {
+        // ... (Destructuring inputs as before) ...
         const {
-            supplierName,
-            supplierAddress,
-            placeOfSupply,
-            buyerName,
-            buyerAddress,
-            itemName,
-            hsn,
-            quantity,
-            rate,
-            vehicleNumber,
-            notes,
+            supplierName, supplierAddress, placeOfSupply, buyerName,
+            buyerAddress, itemName, hsn, quantity, rate, vehicleNumber, notes,
         } = req.body;
 
-        // Get the file path from the request body (set by the route middleware)
-        const weightmentSlipPath = req.body.weightmentSlipPath || '';
+        // 1. Handle File Path
+        // ⚠️ Use the manually saved path from our previous fix
+        let weightmentSlipPath = '';
+        let weightmentSlipURLForDB = '';
 
-        // Generate PDF
-        const pdfBuffer = await generatePDF({
-            supplierName,
-            supplierAddress,
-            placeOfSupply,
-            buyerName,
-            buyerAddress,
-            itemName,
-            hsn,
-            quantity: parseFloat(quantity),
-            rate: parseFloat(rate),
-            vehicleNumber,
-            notes,
-            weightmentSlipPath
-        });
+        if (req.file) {
+            const uploadsDir = path.join(__dirname, '../uploads');
+            if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-        // Save PDF to uploads directory
+            const extension = req.file.originalname.split('.').pop();
+            const filename = `slip-${Date.now()}.${extension}`;
+            weightmentSlipPath = path.join(uploadsDir, filename);
+
+            fs.writeFileSync(weightmentSlipPath, req.file.buffer);
+            weightmentSlipURLForDB = `/uploads/${filename}`;
+        }
+
+        // 2. Generate PDF with Specific Error Handling
+        let pdfBuffer;
+        try {
+            pdfBuffer = await generatePDF({
+                supplierName, supplierAddress, placeOfSupply, buyerName,
+                buyerAddress, itemName, hsn,
+                quantity: parseFloat(quantity),
+                rate: parseFloat(rate),
+                vehicleNumber, notes,
+                weightmentSlipPath
+            });
+        } catch (pdfError) {
+            console.error("CRITICAL: PDF Generation Failed", pdfError);
+            // Return early with a specific error message so frontend knows what broke
+            return res.status(500).json({
+                success: false,
+                message: "Failed to generate PDF invoice. Please ensure inputs are valid."
+            });
+        }
+
+        // 3. Save PDF
         const pdfFileName = `insurance-${Date.now()}.pdf`;
         const pdfPath = path.join(__dirname, '../uploads', pdfFileName);
-        fs.writeFileSync(pdfPath, pdfBuffer);
 
-        // Create and save insurance form
+        try {
+            fs.writeFileSync(pdfPath, pdfBuffer);
+        } catch (fileError) {
+            console.error("CRITICAL: File Write Failed", fileError);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to save generated PDF."
+            });
+        }
+
+        // 4. Save to DB
         const insuranceForm = new InsuranceForm({
             user: req.user.id,
-            supplierName,
-            supplierAddress,
-            placeOfSupply,
-            buyerName,
-            buyerAddress,
-            itemName,
-            hsn,
+            supplierName, supplierAddress, placeOfSupply, buyerName,
+            buyerAddress, itemName, hsn,
             quantity: parseFloat(quantity),
             rate: parseFloat(rate),
             amount: parseFloat(quantity) * parseFloat(rate),
-            vehicleNumber,
-            notes,
-            // Store relative path for both URLs
-            weightmentSlipURL: weightmentSlipPath ? `/uploads/${path.basename(weightmentSlipPath)}` : '',
+            vehicleNumber, notes,
+            weightmentSlipURL: weightmentSlipURLForDB,
             pdfURL: `/uploads/${pdfFileName}`,
         });
 
@@ -143,6 +152,7 @@ const createInsuranceForm = async (req, res) => {
                 pdfURL: `/uploads/${pdfFileName}`
             }
         });
+
     } catch (error) {
         console.error('Create insurance form error:', error);
         res.status(500).json({

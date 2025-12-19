@@ -16,7 +16,7 @@ const sendOtp = async (req, res) => {
             });
         }
 
-        // Remove any non-digit characters and country code if present
+        // Clean number
         const cleanNumber = mobileNumber.replace(/\D/g, '').replace(/^91/, '');
 
         if (cleanNumber.length !== 10) {
@@ -26,6 +26,7 @@ const sendOtp = async (req, res) => {
             });
         }
 
+        // Call the new Async Service
         const result = await sendOTP(cleanNumber);
 
         if (!result.success) {
@@ -66,14 +67,16 @@ const verifyOtpAndRegister = async (req, res) => {
         // Clean mobile number
         const cleanNumber = mobileNumber.replace(/\D/g, '').replace(/^91/, '');
 
-        // Verify OTP
-        const otpVerification = verifyOTP(cleanNumber, otp);
-        if (!otpVerification.success) {
+        // --- FIX: Handle Async & Boolean Return ---
+        const isValid = await verifyOTP(cleanNumber, otp);
+
+        if (!isValid) {
             return res.status(400).json({
                 success: false,
-                message: otpVerification.message || 'Invalid OTP'
+                message: 'Invalid or expired OTP'
             });
         }
+        // ------------------------------------------
 
         // Check if user exists
         let user = await User.findOne({ mobileNumber: cleanNumber });
@@ -90,6 +93,9 @@ const verifyOtpAndRegister = async (req, res) => {
         } else {
             // Update existing user's verification status
             user.verified = true;
+            // Optional: Update category/state if they changed
+            user.category = category;
+            user.state = state;
             await user.save();
         }
 

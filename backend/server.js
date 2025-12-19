@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 // Environment variable validation
 const requiredEnvVars = [
@@ -44,6 +45,7 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // Routes
+app.use('/api', apiLimiter)
 app.use('/api/auth', authRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/admin', adminRoutes);
