@@ -6,8 +6,12 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// ⚠️ ISSUE #4: Cloudinary dependency not used
+// Cloudinary and multer-storage-cloudinary are installed but not used
+// Files are stored locally instead - won't scale in production
+// FIX: Either remove unused dependencies OR implement Cloudinary for production-ready storage
 // Configure multer for memory storage
-const storage = multer.memoryStorage();
+const storage = multer.memoryStorage();  // ❌ Local storage - consider Cloudinary
 
 const upload = multer({
     storage,
@@ -41,22 +45,27 @@ const processUpload = (file) => {
 };
 
 // Routes
+// ⚠️ ISSUE #2: File upload - upload.single() puts file in req.file (single file)
+// The controller incorrectly checks req.files (multiple files) - see insuranceController.js line 92
+// ⚠️ ISSUE #8: Missing input validation
+// No validation for required fields, data types, string lengths, numeric ranges
+// express-validator is installed but not used
 router.post('/create',
     auth,
-    upload.single('weightmentSlip'),
+    upload.single('weightmentSlip'),  // ✅ This puts file in req.file (single file)
     (req, res, next) => {
         try {
             if (req.file) {
                 // Process the uploaded file and save to disk
                 const filePath = processUpload(req.file);
-                req.weightmentSlipPath = filePath;
+                req.weightmentSlipPath = filePath;  // ✅ File path stored here for controller
             }
             next();
         } catch (error) {
             next(error);
         }
     },
-    createInsuranceForm
+    createInsuranceForm  // ❌ No input validation middleware
 );
 
 router.get('/my-forms', auth, getMyInsuranceForms);

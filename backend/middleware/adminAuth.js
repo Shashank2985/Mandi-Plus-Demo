@@ -1,8 +1,16 @@
 const jwt = require('jsonwebtoken');
 
+// ⚠️ ISSUE #3: SECURITY RISK - Hardcoded admin credentials
+// Admin password is hardcoded in source code - major security vulnerability!
+// If code is committed to git, password is exposed
+// Cannot change credentials without code deployment
+// FIX: Move to environment variables:
+//   email: process.env.ADMIN_EMAIL || 'admin@mandiplus.com',
+//   password: process.env.ADMIN_PASSWORD  // Must be set in .env
+// RECOMMENDATION: Use bcrypt for password hashing instead of plain text comparison
 const ADMIN_CREDENTIALS = {
     email: 'admin@mandiplus.com',
-    password: 'pass1234'
+    password: 'pass1234'  // ❌ SECURITY RISK: Hardcoded password
 };
 
 // Admin authentication middleware

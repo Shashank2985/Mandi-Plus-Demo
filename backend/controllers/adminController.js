@@ -1,3 +1,7 @@
+// ⚠️ ISSUE #1: Missing mongoose import
+// mongoose is used on line 122 but not imported here
+// This will cause: ReferenceError: mongoose is not defined
+// FIX: Add: const mongoose = require('mongoose');
 const User = require('../models/User');
 const InsuranceForm = require('../models/InsuranceForm');
 const { verifyAdmin, generateAdminToken } = require('../middleware/adminAuth');
@@ -119,6 +123,8 @@ const getUserInsuranceForms = async (req, res) => {
     try {
         const { userId } = req.params;
 
+        // ⚠️ ISSUE #1: mongoose is not imported above - this will crash!
+        // Error: ReferenceError: mongoose is not defined
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({
                 success: false,

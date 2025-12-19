@@ -1,4 +1,15 @@
 require('dotenv').config();
+// ⚠️ ISSUE #5: Missing environment variable validation
+// Server will crash at runtime if required env vars are missing
+// No validation on startup to catch missing config early
+// FIX: Add validation before starting server:
+//   const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'TWOFACTOR_API_KEY'];
+//   requiredEnvVars.forEach(varName => {
+//       if (!process.env[varName]) {
+//           console.error(`Missing required environment variable: ${varName}`);
+//           process.exit(1);
+//       }
+//   });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,7 +20,11 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+// ⚠️ ISSUE #10: CORS configuration too permissive
+// Allows ALL origins - security risk! Any website can make requests to your API
+// FIX: Configure specific origins:
+//   app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
+app.use(cors());  // ❌ SECURITY: Allows all origins
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 

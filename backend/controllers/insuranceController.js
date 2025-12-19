@@ -18,6 +18,9 @@ const fileToBase64 = (filePath) => {
 };
 
 // Helper function to generate PDF
+// ⚠️ ISSUE #7: No error handling for PDF generation failures
+// Puppeteer can fail (browser launch, memory issues, etc.) but errors aren't caught here
+// This could crash the server if PDF generation fails
 const generatePDF = async (data) => {
     const templatePath = path.join(__dirname, '../templates/invoice.html');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
@@ -87,9 +90,13 @@ const createInsuranceForm = async (req, res) => {
             notes,
         } = req.body;
 
-        // Handle file uploads
+        // ⚠️ ISSUE #2: File upload inconsistency
+        // The route uses upload.single() which puts file in req.file (single file)
+        // But here we're checking req.files (multiple files) - this will always be undefined!
+        // FIX: Change to: if (req.file) { weightmentSlipPath = req.weightmentSlipPath; }
+        // The file is already processed in the route middleware and stored in req.weightmentSlipPath
         let weightmentSlipPath = '';
-        if (req.files?.weightmentSlip?.[0]) {
+        if (req.files?.weightmentSlip?.[0]) {  // ❌ WRONG: Should be req.file
             weightmentSlipPath = req.files.weightmentSlip[0].path;
         }
 
