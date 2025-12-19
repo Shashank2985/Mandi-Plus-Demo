@@ -90,15 +90,8 @@ const createInsuranceForm = async (req, res) => {
             notes,
         } = req.body;
 
-        // ⚠️ ISSUE #2: File upload inconsistency
-        // The route uses upload.single() which puts file in req.file (single file)
-        // But here we're checking req.files (multiple files) - this will always be undefined!
-        // FIX: Change to: if (req.file) { weightmentSlipPath = req.weightmentSlipPath; }
-        // The file is already processed in the route middleware and stored in req.weightmentSlipPath
-        let weightmentSlipPath = '';
-        if (req.files?.weightmentSlip?.[0]) {  // ❌ WRONG: Should be req.file
-            weightmentSlipPath = req.files.weightmentSlip[0].path;
-        }
+        // Get the file path from the request body (set by the route middleware)
+        const weightmentSlipPath = req.body.weightmentSlipPath || '';
 
         // Generate PDF
         const pdfBuffer = await generatePDF({
@@ -136,7 +129,8 @@ const createInsuranceForm = async (req, res) => {
             amount: parseFloat(quantity) * parseFloat(rate),
             vehicleNumber,
             notes,
-            weightmentSlipURL: weightmentSlipPath,
+            // Store relative path for both URLs
+            weightmentSlipURL: weightmentSlipPath ? `/uploads/${path.basename(weightmentSlipPath)}` : '',
             pdfURL: `/uploads/${pdfFileName}`,
         });
 

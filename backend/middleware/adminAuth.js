@@ -9,8 +9,8 @@ const jwt = require('jsonwebtoken');
 //   password: process.env.ADMIN_PASSWORD  // Must be set in .env
 // RECOMMENDATION: Use bcrypt for password hashing instead of plain text comparison
 const ADMIN_CREDENTIALS = {
-    email: 'admin@mandiplus.com',
-    password: 'pass1234'  // ❌ SECURITY RISK: Hardcoded password
+    email: process.env.ADMIN_EMAIL || 'admin@mandiplus.com',
+    password: process.env.ADMIN_PASSWORD   // ❌ SECURITY RISK: Hardcoded password
 };
 
 // Admin authentication middleware

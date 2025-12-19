@@ -2,6 +2,7 @@
 // mongoose is used on line 122 but not imported here
 // This will cause: ReferenceError: mongoose is not defined
 // FIX: Add: const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const InsuranceForm = require('../models/InsuranceForm');
 const { verifyAdmin, generateAdminToken } = require('../middleware/adminAuth');
