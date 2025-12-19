@@ -4,8 +4,15 @@ require('dotenv').config();
 const TWOFACTOR_API_KEY = process.env.TWOFACTOR_API_KEY;
 const TWOFACTOR_BASE_URL = 'https://2factor.in/API/V1';
 
-// In-memory store for OTPs
-const otpStore = new Map();
+// ⚠️ ISSUE #6: In-memory OTP storage
+// OTPs stored in memory will be lost on server restart
+// Won't work with horizontal scaling (multiple server instances)
+// No persistence across deployments
+// FIX: Use Redis or MongoDB for OTP storage with TTL
+//   - Persists across restarts
+//   - Works with multiple server instances
+//   - Automatic expiration
+const otpStore = new Map();  // ❌ Lost on server restart, doesn't scale
 
 /**
  * Send OTP to the given mobile number using 2Factor AUTOGEN2
